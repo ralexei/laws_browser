@@ -10,9 +10,14 @@ dependencies:
   flutter:
     sdk: flutter
   sqflite:
+  equatable: ^0.2.0
+  flutter_bloc: ^0.21.0
   jaguar_orm: ^2.2.6
   jaguar_query_sqflite: ^2.2.6
   cupertino_icons: ^0.1.2
+  shared_preferences: ^0.5.3
+  html: ^0.14.0
+  http: ^0.12.0
 
 dev_dependencies:
   flutter_test:

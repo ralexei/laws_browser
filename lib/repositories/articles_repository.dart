@@ -11,15 +11,17 @@ class ArticlesRepository {
 
   ArticlesRepository._internalCtor();
 
-  void init(Adapter dbAdapter) async {
+  Future<void> init(Adapter dbAdapter) async {
     articleBean = new ArticleBean(dbAdapter);
+    // articleBean.drop();
+    articleBean.createTable();
   }
 
   Future<Article> getById(int id) async {
     return articleBean.find(id);
   }
 
-  void add(Article article) async {
+  Future<void> add(Article article) async {
     await articleBean.insert(article);
   }
 }

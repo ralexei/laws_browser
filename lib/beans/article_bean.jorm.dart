@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'article-bean.dart';
+part of 'article_bean.dart';
 
 // **************************************************************************
 // BeanGenerator

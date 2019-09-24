@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:laws_browser/models/article-model.dart';
+import 'package:laws_browser/repositories/articles_repository.dart';
 
 class HomePage extends StatelessWidget {
   final List<String> _codes = [
@@ -12,7 +14,20 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar()
+      appBar: AppBar(),
+      body: Center(
+        child: FlatButton(
+          color: Colors.blue,
+          textColor: Colors.white,
+          onPressed: () async {
+            var newArticles = Article(articleText: "Article 1");
+            ArticlesRepository.instance.add(newArticles);
+          },
+          child: Text(
+            "Insert article"
+          ),
+        )
+      )
       // body: Column
     );
   }
