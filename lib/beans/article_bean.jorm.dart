@@ -8,16 +8,22 @@ part of 'article_bean.dart';
 
 abstract class _ArticleBean implements Bean<Article> {
   final id = IntField('id');
+  final articleName = StrField('article_name');
   final articleText = StrField('article_text');
+  final categoryId = IntField('category_id');
   Map<String, Field> _fields;
   Map<String, Field> get fields => _fields ??= {
         id.name: id,
+        articleName.name: articleName,
         articleText.name: articleText,
+        categoryId.name: categoryId,
       };
   Article fromMap(Map map) {
     Article model = Article();
     model.id = adapter.parseValue(map['id']);
+    model.articleName = adapter.parseValue(map['article_name']);
     model.articleText = adapter.parseValue(map['article_text']);
+    model.categoryId = adapter.parseValue(map['category_id']);
 
     return model;
   }
@@ -30,19 +36,31 @@ abstract class _ArticleBean implements Bean<Article> {
       if (model.id != null) {
         ret.add(id.set(model.id));
       }
+      ret.add(articleName.set(model.articleName));
       ret.add(articleText.set(model.articleText));
+      ret.add(categoryId.set(model.categoryId));
     } else if (only != null) {
       if (model.id != null) {
         if (only.contains(id.name)) ret.add(id.set(model.id));
       }
+      if (only.contains(articleName.name))
+        ret.add(articleName.set(model.articleName));
       if (only.contains(articleText.name))
         ret.add(articleText.set(model.articleText));
+      if (only.contains(categoryId.name))
+        ret.add(categoryId.set(model.categoryId));
     } else /* if (onlyNonNull) */ {
       if (model.id != null) {
         ret.add(id.set(model.id));
       }
+      if (model.articleName != null) {
+        ret.add(articleName.set(model.articleName));
+      }
       if (model.articleText != null) {
         ret.add(articleText.set(model.articleText));
+      }
+      if (model.categoryId != null) {
+        ret.add(categoryId.set(model.categoryId));
       }
     }
 
@@ -52,7 +70,12 @@ abstract class _ArticleBean implements Bean<Article> {
   Future<void> createTable({bool ifNotExists = false}) async {
     final st = Sql.create(tableName, ifNotExists: ifNotExists);
     st.addInt(id.name, primary: true, autoIncrement: true, isNullable: false);
+    st.addStr(articleName.name, isNullable: false);
     st.addStr(articleText.name, isNullable: false);
+    st.addInt(categoryId.name,
+        foreignTable: categoryBean.tableName,
+        foreignCol: 'id',
+        isNullable: false);
     return adapter.createTable(st);
   }
 
@@ -154,4 +177,32 @@ abstract class _ArticleBean implements Bean<Article> {
     }
     return adapter.remove(remove);
   }
+
+  Future<List<Article>> findByCategory(int categoryId,
+      {bool preload = false, bool cascade = false}) async {
+    final Find find = finder.where(this.categoryId.eq(categoryId));
+    return findMany(find);
+  }
+
+  Future<List<Article>> findByCategoryList(List<Category> models,
+      {bool preload = false, bool cascade = false}) async {
+// Return if models is empty. If this is not done, all the records will be returned!
+    if (models == null || models.isEmpty) return [];
+    final Find find = finder;
+    for (Category model in models) {
+      find.or(this.categoryId.eq(model.id));
+    }
+    return findMany(find);
+  }
+
+  Future<int> removeByCategory(int categoryId) async {
+    final Remove rm = remover.where(this.categoryId.eq(categoryId));
+    return await adapter.remove(rm);
+  }
+
+  void associateCategory(Article child, Category parent) {
+    child.categoryId = parent.id;
+  }
+
+  CategoryBean get categoryBean;
 }

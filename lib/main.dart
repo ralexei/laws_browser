@@ -9,9 +9,9 @@ import 'constants.dart';
 import 'package:laws_browser/repositories/articles_repository.dart';
 
 void main() async {
-  var dbPath = await getDatabasesPath();
-  var dbAdapter = new SqfliteAdapter(pathUtils.join(dbPath, Constants.DbName));
-  await dbAdapter.connect();
+  // var dbPath = await getDatabasesPath();
+  // var dbAdapter = new SqfliteAdapter(pathUtils.join(dbPath, Constants.DbName));
+  // await dbAdapter.connect();
   // await ArticlesRepository.instance.init(dbAdapter);
 
   LegisSynchronizer.instance.parseLegis();
