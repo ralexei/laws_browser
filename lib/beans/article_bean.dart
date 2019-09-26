@@ -1,6 +1,7 @@
 import 'package:jaguar_orm/jaguar_orm.dart';
 import 'package:laws_browser/beans/category_bean.dart';
 import 'package:laws_browser/models/article-model.dart';
+import 'package:laws_browser/models/category-model.dart';
 
 part 'article_bean.jorm.dart';
 

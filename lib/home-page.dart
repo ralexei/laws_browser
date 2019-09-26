@@ -1,34 +1,42 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:laws_browser/models/article-model.dart';
-import 'package:laws_browser/repositories/articles_repository.dart';
+import 'package:laws_browser/models/category-model.dart';
+import 'package:laws_browser/repositories/categories_repository.dart';
 
 class HomePage extends StatelessWidget {
-  final List<String> _codes = [
-    "Codul Civil",
-    "Codul Penal",
-    "Codul AltCod",
-    "Codul Inca un cod"
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: Center(
-        child: FlatButton(
-          color: Colors.blue,
-          textColor: Colors.white,
-          onPressed: () async {
-            var newArticles = Article(articleText: "Article 1");
-            ArticlesRepository.instance.add(newArticles);
-          },
-          child: Text(
-            "Insert article"
-          ),
-        )
-      )
-      // body: Column
+      body: FutureBuilder<List<Category>>(
+        builder: (context, projectSnap){
+          if (projectSnap.hasData){
+            return ListView.separated(
+              separatorBuilder: (context, index) => Divider(
+                color: Colors.black
+              ),
+              itemCount: projectSnap.data.length,
+              itemBuilder: (context, index) {
+                return _buildTree(projectSnap.data[index]);
+              }
+            );
+          }
+          return Center(child: Text('Something went wrong'));
+        },
+        future: CategoriesRepository.instance.getHierarchized(),
+      ),
+    );
+  }
+
+  Widget _buildTree(Category rootCategory){
+    if (rootCategory.children.isEmpty)
+      return ListTile(title: Text(rootCategory.name));
+    
+    return ExpansionTile(
+      title: Text(rootCategory.name),
+      key: PageStorageKey<Category>(rootCategory),
+      children: rootCategory.children.map(_buildTree).toList(),
     );
   }
 }

@@ -13,15 +13,15 @@ class ArticlesRepository {
 
   Future<void> init(Adapter dbAdapter) async {
     articleBean = new ArticleBean(dbAdapter);
-    // articleBean.drop();
-    articleBean.createTable();
+    // await articleBean.drop();
+    // await articleBean.createTable();
   }
 
   Future<Article> getById(int id) async {
-    return articleBean.find(id);
+    return await articleBean.find(id);
   }
 
   Future<void> add(Article article) async {
-    await articleBean.insert(article);
+    await await articleBean.insert(article);
   }
 }

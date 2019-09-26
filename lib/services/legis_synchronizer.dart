@@ -21,7 +21,7 @@ class LegisSynchronizer {
     var trimmedHtml = HtmlUtils.removeHtmlTags(response.body);
     var categories = _getCategories(trimmedHtml);
 
-    _mapCategoriesRelations(Category(name: _trimCategory(categories[0])), categories);
+    _mapCategoriesRelations(Category(name: categories[0]), categories);
     
     return _categories;
   }
@@ -53,51 +53,63 @@ class LegisSynchronizer {
     return resultList;
   }
 
+  // List<Category> hierarchizeCategories(List<Category> categories){
+    
+  // }
+
   void _mapCategoriesRelations(Category parent, List<String> categories, [int index = 1]){
-    // if (index >= categories.length)
-    //   return;
+    if (index >= categories.length)
+      return;
 
-    // var parentPriority = _getCategoryHierarchyProperty(parent.name);
-    // var closestChildPrority = _getCategoryHierarchyProperty(categories[index]);
+    parent.name = _trimCategory(parent.name);
 
-    // while (index < categories.length)
-    // {
-    //   var categoryPriority = _getCategoryHierarchyProperty(categories[index]);
+    var parentPriority = _getCategoryHierarchyProperty(parent.name);
+    var closestChildPrority = _getCategoryHierarchyProperty(categories[index]);
 
-    //   if (categoryPriority == parentPriority && parentPriority == 1)
-    //     break;
+    while (index < categories.length)
+    {
+      var categoryPriority = _getCategoryHierarchyProperty(categories[index]);
 
-    //   if (categoryPriority <= parentPriority)
-    //     return;
+      if (categoryPriority == parentPriority && parentPriority == 1)
+        break;
 
-    //   if (categoryPriority == closestChildPrority)
-    //   {
-    //     if (categoryPriority < 7){
-    //       var newCategory = Category(name: _trimCategory(categories[index]));
+      if (categoryPriority <= parentPriority)
+        return;
 
-    //       parent.children.add(newCategory);
-    //       _mapCategoriesRelations(newCategory, categories, index + 1);
-    //     }        
-    //     else
-    //       if (categoryPriority != 0){
-    //         var articleNameEnd = categories[index].indexOf('\n');
-    //         var articleName = categories[index].substring(0, articleNameEnd);
-    //         var articleText = categories[index].substring(articleNameEnd);
+      if (categoryPriority == closestChildPrority)
+      {
+        if (categoryPriority < 7){
+          var categoryName = categories[index];
 
-    //         parent.articles.add(Article(articleName: articleName.trim(), articleText: articleText.trim()));
-    //       }
-    //   }
+          categoryName = categoryName.contains('T i t l u l') ? categories[index].replaceFirst('T i t l u l', 'Titlul') : categoryName;
 
-    //   index++;
-    // }
+          var newCategory = Category(name: categories[index]);
 
-    // if (parentPriority == 1)
-    // {
-    //   _categories.add(parent);
+          parent.children.add(newCategory);
+          _mapCategoriesRelations(newCategory, categories, index + 1);
+        }        
+        else
+        {
+          if (categoryPriority != 0){
+            var articleNameEnd = categories[index].indexOf('\n');
+            var articleName = categories[index].substring(0, articleNameEnd);
+            var articleText = categories[index].substring(articleNameEnd);
 
-    //   if (index < categories.length)
-    //     _mapCategoriesRelations(Category(name: categories[index].trim()), categories, index + 1);
-    // }
+            parent.articles.add(Article(articleName: articleName.trim(), articleText: articleText.trim()));
+          }
+        }
+      }
+
+      index++;
+    }
+
+    if (parentPriority == 1)
+    {
+      _categories.add(parent);
+
+      if (index < categories.length)
+        _mapCategoriesRelations(Category(name: categories[index]), categories, index + 1);
+    }
   }
 
   int _getCategoryHierarchyProperty(String categoryName){

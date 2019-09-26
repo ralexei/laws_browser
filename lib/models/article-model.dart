@@ -12,5 +12,5 @@ class Article {
 
   static const String tableName = 'Article';
 
-  Article({this.id, this.articleText, this.articleName});
+  Article({this.articleText, this.articleName});
 }
