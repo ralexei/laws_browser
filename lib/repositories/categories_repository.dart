@@ -13,8 +13,8 @@ class CategoriesRepository{
 
   Future<void> init(Adapter dbAdapter) async {
     categoryBean = new CategoryBean(dbAdapter);
-    // await categoryBean.drop();
-    // await categoryBean.createTable();
+    await categoryBean.drop();
+    await categoryBean.createTable();
   }
 
   Future<void> insertRange(List<Category> categories) async {

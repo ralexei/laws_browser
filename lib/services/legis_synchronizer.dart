@@ -1,3 +1,4 @@
+import 'package:html_unescape/html_unescape.dart';
 import 'package:http/http.dart' as http;
 import 'package:laws_browser/models/article-model.dart';
 import 'package:laws_browser/models/category-model.dart';
@@ -18,7 +19,8 @@ class LegisSynchronizer {
   Future<List<Category>> parseLegis() async {
     var url = "http://www.legis.md/cautare/showdetails/112573";
     var response = await http.get(url);
-    var trimmedHtml = HtmlUtils.removeHtmlTags(response.body);
+    var unescaper = new HtmlUnescape();
+    var trimmedHtml = unescaper.convert(response.body);
     var categories = _getCategories(trimmedHtml);
 
     _mapCategoriesRelations(Category(name: categories[0]), categories);
@@ -61,7 +63,7 @@ class LegisSynchronizer {
     if (index >= categories.length)
       return;
 
-    parent.name = _trimCategory(parent.name);
+    parent.name = HtmlUtils.removeHtmlTags(_trimCategory(parent.name));
 
     var parentPriority = _getCategoryHierarchyProperty(parent.name);
     var closestChildPrority = _getCategoryHierarchyProperty(categories[index]);
@@ -82,8 +84,9 @@ class LegisSynchronizer {
           var categoryName = categories[index];
 
           categoryName = categoryName.contains('T i t l u l') ? categories[index].replaceFirst('T i t l u l', 'Titlul') : categoryName;
+          // categoryName = HtmlUtils.removeHtmlTags(categoryName);
 
-          var newCategory = Category(name: categories[index]);
+          var newCategory = Category(name: categoryName);
 
           parent.children.add(newCategory);
           _mapCategoriesRelations(newCategory, categories, index + 1);
@@ -91,9 +94,9 @@ class LegisSynchronizer {
         else
         {
           if (categoryPriority != 0){
-            var articleNameEnd = categories[index].indexOf('\n');
+            var articleNameEnd = categories[index].indexOf(new RegExp(r'[^a-z]'));
             var articleName = categories[index].substring(0, articleNameEnd);
-            var articleText = categories[index].substring(articleNameEnd);
+            var articleText = categories[index];
 
             parent.articles.add(Article(articleName: articleName.trim(), articleText: articleText.trim()));
           }
@@ -115,7 +118,7 @@ class LegisSynchronizer {
   int _getCategoryHierarchyProperty(String categoryName){
     if (categoryName.contains("Cartea"))
 				return 1;
-			else if (categoryName.contains("T i t l u l"))
+			else if (categoryName.contains(new RegExp(r"T\s*i\s*t\s*l\s*u\s*l")))
 				return 2;
 			else if (categoryName.contains("Capitolul"))
 				return 3;
@@ -131,8 +134,21 @@ class LegisSynchronizer {
 			return 0;
   }
 
+  String _capitalize(String m){
+    var lowerCase = m.toLowerCase().trim().replaceAll('\n', ' ');
+
+    return lowerCase[0].toUpperCase() + lowerCase.substring(1);
+  }
+
   String _trimCategory(String category){
-    return category.trim().replaceAll('\n', '. ');
+    var trimmedCategory = category.trim().replaceFirst('\n', '. ');
+    var sentences = trimmedCategory.split('.');
+    var firstSentence = sentences.removeAt(0);
+    
+    sentences.removeWhere((r) => r == '');
+    sentences = sentences.map(_capitalize).toList();
+    
+    return firstSentence.trim() + '. ' + sentences.join('. ');
   }
 
   /* For the bad days
