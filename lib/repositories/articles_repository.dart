@@ -13,8 +13,8 @@ class ArticlesRepository {
 
   Future<void> init(Adapter dbAdapter) async {
     articleBean = new ArticleBean(dbAdapter);
-    await articleBean.drop();
-    await articleBean.createTable();
+    // await articleBean.drop();
+    // await articleBean.createTable();
   }
 
   Future<Article> getById(int id) async {

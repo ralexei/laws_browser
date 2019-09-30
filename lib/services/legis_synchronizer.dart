@@ -20,7 +20,7 @@ class LegisSynchronizer {
     var url = "http://www.legis.md/cautare/showdetails/112573";
     var response = await http.get(url);
     var unescaper = new HtmlUnescape();
-    var trimmedHtml = unescaper.convert(response.body);
+    var trimmedHtml = HtmlUtils.removeHtmlTags(response.body);
     var categories = _getCategories(trimmedHtml);
 
     _mapCategoriesRelations(Category(name: categories[0]), categories);
@@ -63,9 +63,12 @@ class LegisSynchronizer {
     if (index >= categories.length)
       return;
 
-    parent.name = HtmlUtils.removeHtmlTags(_trimCategory(parent.name));
+    parent.name = _trimCategory(parent.name);
 
     var parentPriority = _getCategoryHierarchyProperty(parent.name);
+
+    parent.name = parent.name.contains('T i t l u l') ? parent.name.replaceFirst('T i t l u l', 'Titlul') : parent.name;
+
     var closestChildPrority = _getCategoryHierarchyProperty(categories[index]);
 
     while (index < categories.length)
@@ -83,7 +86,7 @@ class LegisSynchronizer {
         if (categoryPriority < 7){
           var categoryName = categories[index];
 
-          categoryName = categoryName.contains('T i t l u l') ? categories[index].replaceFirst('T i t l u l', 'Titlul') : categoryName;
+          // categoryName = categoryPriority.toString() + (categoryName.contains('T i t l u l') ? categories[index].replaceFirst('T i t l u l', 'Titlul') : categoryName);
           // categoryName = HtmlUtils.removeHtmlTags(categoryName);
 
           var newCategory = Category(name: categoryName);
@@ -118,7 +121,7 @@ class LegisSynchronizer {
   int _getCategoryHierarchyProperty(String categoryName){
     if (categoryName.contains("Cartea"))
 				return 1;
-			else if (categoryName.contains(new RegExp(r"T\s*i\s*t\s*l\s*u\s*l")))
+			else if (categoryName.contains("T i t l u l"))
 				return 2;
 			else if (categoryName.contains("Capitolul"))
 				return 3;

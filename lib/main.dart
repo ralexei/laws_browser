@@ -16,9 +16,9 @@ void main() async {
   await ArticlesRepository.instance.init(dbAdapter);
   await CategoriesRepository.instance.init(dbAdapter);
   
-  var categories = await LegisSynchronizer.instance.parseLegis();
+  // var categories = await LegisSynchronizer.instance.parseLegis(); 
 
-  await CategoriesRepository.instance.insertRange(categories);
+  // await CategoriesRepository.instance.insertRange(categories);
 
   runApp(LBApp());
 }
