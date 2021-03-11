@@ -35,9 +35,9 @@ class TableCategory extends SqfEntityTableBase {
       SqfEntityFieldBase('name', DbType.text, isNotNull: true),
       SqfEntityFieldBase('parent', DbType.text, isNotNull: true),
       SqfEntityFieldRelationshipBase(
-          TableArticle.getInstance, DeleteRule.NO_ACTION,
+          TableArticle.getInstance, DeleteRule.CASCADE,
           relationType: RelationType.ONE_TO_MANY,
-          fieldName: 'articlesId',
+          fieldName: 'articles',
           isNotNull: false),
     ];
     super.init();
@@ -99,11 +99,6 @@ class TableArticle extends SqfEntityTableBase {
     fields = [
       SqfEntityFieldBase('articleName', DbType.text, isNotNull: true),
       SqfEntityFieldBase('articleText', DbType.text, isNotNull: true),
-      SqfEntityFieldRelationshipBase(
-          TableCategory.getInstance, DeleteRule.NO_ACTION,
-          relationType: RelationType.ONE_TO_MANY,
-          fieldName: 'category',
-          isNotNull: false),
     ];
     super.init();
   }
@@ -135,11 +130,11 @@ class SequenceIdentitySequence extends SqfEntitySequenceBase {
 // END SEQUENCES
 
 // BEGIN DATABASE MODEL
-class MyDbModel extends SqfEntityModelProvider {
-  MyDbModel() {
-    databaseName = myDbModel.databaseName;
-    password = myDbModel.password;
-    dbVersion = myDbModel.dbVersion;
+class LawsBrowserDB extends SqfEntityModelProvider {
+  LawsBrowserDB() {
+    databaseName = lawsBrowserDbModel.databaseName;
+    password = lawsBrowserDbModel.password;
+    dbVersion = lawsBrowserDbModel.dbVersion;
     databaseTables = [
       TableCategory.getInstance,
       TableCategoriesRelation.getInstance,
@@ -150,7 +145,7 @@ class MyDbModel extends SqfEntityModelProvider {
       SequenceIdentitySequence.getInstance,
     ];
 
-    bundledDatabasePath = myDbModel
+    bundledDatabasePath = lawsBrowserDbModel
         .bundledDatabasePath; //'assets/sample.db'; // This value is optional. When bundledDatabasePath is empty then EntityBase creats a new database when initializing the database
   }
   Map<String, dynamic> getControllers() {
@@ -164,13 +159,13 @@ class MyDbModel extends SqfEntityModelProvider {
 // BEGIN ENTITIES
 // region Category
 class Category {
-  Category({this.id, this.name, this.parent, this.articlesId}) {
+  Category({this.id, this.name, this.parent, this.articles}) {
     _setDefaultValues();
   }
-  Category.withFields(this.name, this.parent, this.articlesId) {
+  Category.withFields(this.name, this.parent, this.articles) {
     _setDefaultValues();
   }
-  Category.withId(this.id, this.name, this.parent, this.articlesId) {
+  Category.withId(this.id, this.name, this.parent, this.articles) {
     _setDefaultValues();
   }
   Category.fromMap(Map<String, dynamic> o, {bool setDefaultValues = true}) {
@@ -184,7 +179,7 @@ class Category {
     if (o['parent'] != null) {
       parent = o['parent'] as String;
     }
-    articlesId = int.tryParse(o['articlesId'].toString());
+    articles = int.tryParse(o['articles'].toString());
 
     // RELATIONSHIPS FromMAP
     plArticle = o['article'] != null
@@ -196,7 +191,7 @@ class Category {
   int id;
   String name;
   String parent;
-  int articlesId;
+  int articles;
 
   BoolResult saveResult;
   // end FIELDS (Category)
@@ -206,10 +201,10 @@ class Category {
   /// You can also specify this object into certain preload fields. Ex: toList(preload:true, preloadFields:['plArticle', 'plField2'..]) or so on..
   Article plArticle;
 
-  /// get Article By ArticlesId
+  /// get Article By Articles
   Future<Article> getArticle(
       {bool loadParents = false, List<String> loadedFields}) async {
-    final _obj = await Article().getById(articlesId,
+    final _obj = await Article().getById(articles,
         loadParents: loadParents, loadedFields: loadedFields);
     return _obj;
   }
@@ -267,23 +262,6 @@ class Category {
         .and;
   }
 
-  /// to load children of items to this field, use preload parameter. Ex: toList(preload:true) or toSingle(preload:true) or getById(preload:true)
-  /// You can also specify this object into certain preload fields. Ex: toList(preload:true, preloadFields:['plArticles', 'plField2'..]) or so on..
-  List<Article> plArticles;
-
-  /// get Article(s) filtered by id=category
-  ArticleFilterBuilder getArticles(
-      {List<String> columnsToSelect, bool getIsDeleted}) {
-    if (id == null) {
-      return null;
-    }
-    return Article()
-        .select(columnsToSelect: columnsToSelect, getIsDeleted: getIsDeleted)
-        .category
-        .equals(id)
-        .and;
-  }
-
 // END COLLECTIONS & VIRTUALS (Category)
 
   static const bool _softDeleteActivated = false;
@@ -308,8 +286,8 @@ class Category {
       map['parent'] = parent;
     }
 
-    if (articlesId != null) {
-      map['articlesId'] = forView ? plArticle.articleName : articlesId;
+    if (articles != null) {
+      map['articles'] = forView ? plArticle.articleName : articles;
     }
 
     return map;
@@ -331,8 +309,8 @@ class Category {
       map['parent'] = parent;
     }
 
-    if (articlesId != null) {
-      map['articlesId'] = forView ? plArticle.articleName : articlesId;
+    if (articles != null) {
+      map['articles'] = forView ? plArticle.articleName : articles;
     }
 
 // COLLECTIONS (Category)
@@ -344,9 +322,6 @@ class Category {
     }
     if (!forQuery) {
       map['CategoriesRelations'] = await getCategoriesRelations().toMapList();
-    }
-    if (!forQuery) {
-      map['Articles'] = await getArticles().toMapList();
     }
 // END COLLECTIONS (Category)
 
@@ -364,11 +339,11 @@ class Category {
   }
 
   List<dynamic> toArgs() {
-    return [name, parent, articlesId];
+    return [name, parent, articles];
   }
 
   List<dynamic> toArgsWithIds() {
-    return [id, name, parent, articlesId];
+    return [id, name, parent, articles];
   }
 
   static Future<List<Category>> fromWebUrl(String url,
@@ -447,16 +422,6 @@ class Category {
                       preload: preload,
                       preloadFields: preloadFields,
                       loadParents: false /*, loadedFields:_loadedFields*/);
-        }
-        if (/*!_loadedFields.contains('categories.plArticles') && */ (preloadFields ==
-                null ||
-            preloadFields.contains('plArticles'))) {
-          /*_loadedFields.add('categories.plArticles'); */
-          obj.plArticles = obj.plArticles ??
-              await obj.getArticles().toList(
-                  preload: preload,
-                  preloadFields: preloadFields,
-                  loadParents: false /*, loadedFields:_loadedFields*/);
         }
       } // END RELATIONSHIPS PRELOAD CHILD
 
@@ -544,16 +509,6 @@ class Category {
                       preloadFields: preloadFields,
                       loadParents: false /*, loadedFields:_loadedFields*/);
         }
-        if (/*!_loadedFields.contains('categories.plArticles') && */ (preloadFields ==
-                null ||
-            preloadFields.contains('plArticles'))) {
-          /*_loadedFields.add('categories.plArticles'); */
-          obj.plArticles = obj.plArticles ??
-              await obj.getArticles().toList(
-                  preload: preload,
-                  preloadFields: preloadFields,
-                  loadParents: false /*, loadedFields:_loadedFields*/);
-        }
       } // END RELATIONSHIPS PRELOAD CHILD
 
       // RELATIONSHIPS PRELOAD
@@ -603,14 +558,14 @@ class Category {
   ///
   /// Returns a <List<BoolResult>>
   static Future<List<dynamic>> saveAll(List<Category> categories) async {
-    // final results = _mnCategory.saveAll('INSERT OR REPLACE INTO categories (id,name, parent, articlesId)  VALUES (?,?,?,?)',categories);
+    // final results = _mnCategory.saveAll('INSERT OR REPLACE INTO categories (id,name, parent, articles)  VALUES (?,?,?,?)',categories);
     // return results; removed in sqfentity_gen 1.3.0+6
-    await MyDbModel().batchStart();
+    await LawsBrowserDB().batchStart();
     for (final obj in categories) {
       await obj.save();
     }
-    //    return MyDbModel().batchCommit();
-    final result = await MyDbModel().batchCommit();
+    //    return LawsBrowserDB().batchCommit();
+    final result = await LawsBrowserDB().batchCommit();
     for (int i = 0; i < categories.length; i++) {
       if (categories[i].id == null) {
         categories[i].id = result[i] as int;
@@ -626,8 +581,8 @@ class Category {
   Future<int> upsert() async {
     try {
       if (await _mnCategory.rawInsert(
-              'INSERT OR REPLACE INTO categories (id,name, parent, articlesId)  VALUES (?,?,?,?)',
-              [id, name, parent, articlesId]) ==
+              'INSERT OR REPLACE INTO categories (id,name, parent, articles)  VALUES (?,?,?,?)',
+              [id, name, parent, articles]) ==
           1) {
         saveResult = BoolResult(
             success: true,
@@ -652,7 +607,7 @@ class Category {
   /// Returns a BoolCommitResult
   Future<BoolCommitResult> upsertAll(List<Category> categories) async {
     final results = await _mnCategory.rawInsertAll(
-        'INSERT OR REPLACE INTO categories (id,name, parent, articlesId)  VALUES (?,?,?,?)',
+        'INSERT OR REPLACE INTO categories (id,name, parent, articles)  VALUES (?,?,?,?)',
         categories);
     return results;
   }
@@ -687,12 +642,6 @@ class Category {
           success: false,
           errorMessage:
               'SQFENTITY ERROR: The DELETE statement conflicted with the REFERENCE RELATIONSHIP (CategoriesRelation.children)');
-    }
-    if (await Article().select().category.equals(id).and.toCount() > 0) {
-      return BoolResult(
-          success: false,
-          errorMessage:
-              'SQFENTITY ERROR: The DELETE statement conflicted with the REFERENCE RELATIONSHIP (Article.category)');
     }
     if (!_softDeleteActivated || hardDelete) {
       return _mnCategory
@@ -1141,9 +1090,9 @@ class CategoryFilterBuilder extends SearchCriteria {
     return _parent = setField(_parent, 'parent', DbType.text);
   }
 
-  CategoryField _articlesId;
-  CategoryField get articlesId {
-    return _articlesId = setField(_articlesId, 'articlesId', DbType.integer);
+  CategoryField _articles;
+  CategoryField get articles {
+    return _articles = setField(_articles, 'articles', DbType.integer);
   }
 
   bool _getIsDeleted;
@@ -1287,20 +1236,6 @@ class CategoryFilterBuilder extends SearchCriteria {
           errorMessage:
               'SQFENTITY ERROR: The DELETE statement conflicted with the REFERENCE RELATIONSHIP (CategoriesRelation.children)');
     }
-// Check sub records where in (Article) according to DeleteRule.NO_ACTION
-
-    final idListArticleBYcategory = toListPrimaryKeySQL(false);
-    final resArticleBYcategory = await Article()
-        .select()
-        .where('category IN (${idListArticleBYcategory['sql']})',
-            parameterValue: idListArticleBYcategory['args'])
-        .toCount();
-    if (resArticleBYcategory > 0) {
-      return BoolResult(
-          success: false,
-          errorMessage:
-              'SQFENTITY ERROR: The DELETE statement conflicted with the REFERENCE RELATIONSHIP (Article.category)');
-    }
 
     if (Category._softDeleteActivated && !hardDelete) {
       r = await _obj._mnCategory.updateBatch(qparams, {'isDeleted': 1});
@@ -1386,16 +1321,6 @@ class CategoryFilterBuilder extends SearchCriteria {
                       preload: preload,
                       preloadFields: preloadFields,
                       loadParents: false /*, loadedFields:_loadedFields*/);
-        }
-        if (/*!_loadedFields.contains('categories.plArticles') && */ (preloadFields ==
-                null ||
-            preloadFields.contains('plArticles'))) {
-          /*_loadedFields.add('categories.plArticles'); */
-          obj.plArticles = obj.plArticles ??
-              await obj.getArticles().toList(
-                  preload: preload,
-                  preloadFields: preloadFields,
-                  loadParents: false /*, loadedFields:_loadedFields*/);
         }
       } // END RELATIONSHIPS PRELOAD CHILD
 
@@ -1580,10 +1505,10 @@ class CategoryFields {
         _fParent ?? SqlSyntax.setField(_fParent, 'parent', DbType.text);
   }
 
-  static TableField _fArticlesId;
-  static TableField get articlesId {
-    return _fArticlesId = _fArticlesId ??
-        SqlSyntax.setField(_fArticlesId, 'articlesId', DbType.integer);
+  static TableField _fArticles;
+  static TableField get articles {
+    return _fArticles = _fArticles ??
+        SqlSyntax.setField(_fArticles, 'articles', DbType.integer);
   }
 }
 // endregion CategoryFields
@@ -1591,7 +1516,7 @@ class CategoryFields {
 //region CategoryManager
 class CategoryManager extends SqfEntityProvider {
   CategoryManager()
-      : super(MyDbModel(),
+      : super(LawsBrowserDB(),
             tableName: _tableName,
             primaryKeyList: _primaryKeyList,
             whereStr: _whereStr);
@@ -1936,12 +1861,12 @@ class CategoriesRelation {
       List<CategoriesRelation> categoriesrelations) async {
     // final results = _mnCategoriesRelation.saveAll('INSERT OR REPLACE INTO categoriesRelations (id,category, parent, children)  VALUES (?,?,?,?)',categoriesrelations);
     // return results; removed in sqfentity_gen 1.3.0+6
-    await MyDbModel().batchStart();
+    await LawsBrowserDB().batchStart();
     for (final obj in categoriesrelations) {
       await obj.save();
     }
-    //    return MyDbModel().batchCommit();
-    final result = await MyDbModel().batchCommit();
+    //    return LawsBrowserDB().batchCommit();
+    final result = await LawsBrowserDB().batchCommit();
 
     return result;
   }
@@ -2844,7 +2769,7 @@ class CategoriesRelationFields {
 //region CategoriesRelationManager
 class CategoriesRelationManager extends SqfEntityProvider {
   CategoriesRelationManager()
-      : super(MyDbModel(),
+      : super(LawsBrowserDB(),
             tableName: _tableName,
             primaryKeyList: _primaryKeyList,
             whereStr: _whereStr);
@@ -2856,13 +2781,13 @@ class CategoriesRelationManager extends SqfEntityProvider {
 //endregion CategoriesRelationManager
 // region Article
 class Article {
-  Article({this.id, this.articleName, this.articleText, this.category}) {
+  Article({this.id, this.articleName, this.articleText}) {
     _setDefaultValues();
   }
-  Article.withFields(this.articleName, this.articleText, this.category) {
+  Article.withFields(this.articleName, this.articleText) {
     _setDefaultValues();
   }
-  Article.withId(this.id, this.articleName, this.articleText, this.category) {
+  Article.withId(this.id, this.articleName, this.articleText) {
     _setDefaultValues();
   }
   Article.fromMap(Map<String, dynamic> o, {bool setDefaultValues = true}) {
@@ -2876,43 +2801,21 @@ class Article {
     if (o['articleText'] != null) {
       articleText = o['articleText'] as String;
     }
-    category = int.tryParse(o['category'].toString());
-
-    // RELATIONSHIPS FromMAP
-    plCategory = o['plCategory'] != null
-        ? Category.fromMap(o['plCategory'] as Map<String, dynamic>)
-        : null;
-    // END RELATIONSHIPS FromMAP
   }
   // FIELDS (Article)
   int id;
   String articleName;
   String articleText;
-  int category;
 
   BoolResult saveResult;
   // end FIELDS (Article)
-
-// RELATIONSHIPS (Article)
-  /// to load parent of items to this field, use preload parameter ex: toList(preload:true) or toSingle(preload:true) or getById(preload:true)
-  /// You can also specify this object into certain preload fields. Ex: toList(preload:true, preloadFields:['plCategory', 'plField2'..]) or so on..
-  Category plCategory;
-
-  /// get Category By Category
-  Future<Category> getCategory(
-      {bool loadParents = false, List<String> loadedFields}) async {
-    final _obj = await Category().getById(category,
-        loadParents: loadParents, loadedFields: loadedFields);
-    return _obj;
-  }
-  // END RELATIONSHIPS (Article)
 
 // COLLECTIONS & VIRTUALS (Article)
   /// to load children of items to this field, use preload parameter. Ex: toList(preload:true) or toSingle(preload:true) or getById(preload:true)
   /// You can also specify this object into certain preload fields. Ex: toList(preload:true, preloadFields:['plCategories', 'plField2'..]) or so on..
   List<Category> plCategories;
 
-  /// get Category(s) filtered by id=articlesId
+  /// get Category(s) filtered by id=articles
   CategoryFilterBuilder getCategories(
       {List<String> columnsToSelect, bool getIsDeleted}) {
     if (id == null) {
@@ -2920,7 +2823,7 @@ class Article {
     }
     return Category()
         .select(columnsToSelect: columnsToSelect, getIsDeleted: getIsDeleted)
-        .articlesId
+        .articles
         .equals(id)
         .and;
   }
@@ -2949,10 +2852,6 @@ class Article {
       map['articleText'] = articleText;
     }
 
-    if (category != null) {
-      map['category'] = forView ? plCategory.name : category;
-    }
-
     return map;
   }
 
@@ -2970,10 +2869,6 @@ class Article {
 
     if (articleText != null) {
       map['articleText'] = articleText;
-    }
-
-    if (category != null) {
-      map['category'] = forView ? plCategory.name : category;
     }
 
 // COLLECTIONS (Article)
@@ -2996,11 +2891,11 @@ class Article {
   }
 
   List<dynamic> toArgs() {
-    return [articleName, articleText, category];
+    return [articleName, articleText];
   }
 
   List<dynamic> toArgsWithIds() {
-    return [id, articleName, articleText, category];
+    return [id, articleName, articleText];
   }
 
   static Future<List<Article>> fromWebUrl(String url,
@@ -3060,20 +2955,6 @@ class Article {
         }
       } // END RELATIONSHIPS PRELOAD CHILD
 
-      // RELATIONSHIPS PRELOAD
-      if (preload || loadParents) {
-        loadedFields = loadedFields ?? [];
-        if (/*!_loadedFields.contains('categories.plCategory') && */ (preloadFields ==
-                null ||
-            loadParents ||
-            preloadFields.contains('plCategory'))) {
-          /*_loadedFields.add('categories.plCategory');*/
-          obj.plCategory = obj.plCategory ??
-              await obj.getCategory(
-                  loadParents: loadParents /*, loadedFields: _loadedFields*/);
-        }
-      } // END RELATIONSHIPS PRELOAD
-
       objList.add(obj);
     }
     return objList;
@@ -3124,20 +3005,6 @@ class Article {
         }
       } // END RELATIONSHIPS PRELOAD CHILD
 
-      // RELATIONSHIPS PRELOAD
-      if (preload || loadParents) {
-        loadedFields = loadedFields ?? [];
-        if (/*!_loadedFields.contains('categories.plCategory') && */ (preloadFields ==
-                null ||
-            loadParents ||
-            preloadFields.contains('plCategory'))) {
-          /*_loadedFields.add('categories.plCategory');*/
-          obj.plCategory = obj.plCategory ??
-              await obj.getCategory(
-                  loadParents: loadParents /*, loadedFields: _loadedFields*/);
-        }
-      } // END RELATIONSHIPS PRELOAD
-
     } else {
       obj = null;
     }
@@ -3171,14 +3038,14 @@ class Article {
   ///
   /// Returns a <List<BoolResult>>
   static Future<List<dynamic>> saveAll(List<Article> articles) async {
-    // final results = _mnArticle.saveAll('INSERT OR REPLACE INTO articles (id,articleName, articleText, category)  VALUES (?,?,?,?)',articles);
+    // final results = _mnArticle.saveAll('INSERT OR REPLACE INTO articles (id,articleName, articleText)  VALUES (?,?,?)',articles);
     // return results; removed in sqfentity_gen 1.3.0+6
-    await MyDbModel().batchStart();
+    await LawsBrowserDB().batchStart();
     for (final obj in articles) {
       await obj.save();
     }
-    //    return MyDbModel().batchCommit();
-    final result = await MyDbModel().batchCommit();
+    //    return LawsBrowserDB().batchCommit();
+    final result = await LawsBrowserDB().batchCommit();
     for (int i = 0; i < articles.length; i++) {
       if (articles[i].id == null) {
         articles[i].id = result[i] as int;
@@ -3194,8 +3061,8 @@ class Article {
   Future<int> upsert() async {
     try {
       if (await _mnArticle.rawInsert(
-              'INSERT OR REPLACE INTO articles (id,articleName, articleText, category)  VALUES (?,?,?,?)',
-              [id, articleName, articleText, category]) ==
+              'INSERT OR REPLACE INTO articles (id,articleName, articleText)  VALUES (?,?,?)',
+              [id, articleName, articleText]) ==
           1) {
         saveResult = BoolResult(
             success: true,
@@ -3220,7 +3087,7 @@ class Article {
   /// Returns a BoolCommitResult
   Future<BoolCommitResult> upsertAll(List<Article> articles) async {
     final results = await _mnArticle.rawInsertAll(
-        'INSERT OR REPLACE INTO articles (id,articleName, articleText, category)  VALUES (?,?,?,?)',
+        'INSERT OR REPLACE INTO articles (id,articleName, articleText)  VALUES (?,?,?)',
         articles);
     return results;
   }
@@ -3230,11 +3097,13 @@ class Article {
   /// <returns>BoolResult res.success=Deleted, not res.success=Can not deleted
   Future<BoolResult> delete([bool hardDelete = false]) async {
     print('SQFENTITIY: delete Article invoked (id=$id)');
-    if (await Category().select().articlesId.equals(id).and.toCount() > 0) {
-      return BoolResult(
-          success: false,
-          errorMessage:
-              'SQFENTITY ERROR: The DELETE statement conflicted with the REFERENCE RELATIONSHIP (Category.articlesId)');
+    var result = BoolResult();
+    {
+      result =
+          await Category().select().articles.equals(id).and.delete(hardDelete);
+    }
+    if (!result.success) {
+      return result;
     }
     if (!_softDeleteActivated || hardDelete) {
       return _mnArticle
@@ -3683,11 +3552,6 @@ class ArticleFilterBuilder extends SearchCriteria {
     return _articleText = setField(_articleText, 'articleText', DbType.text);
   }
 
-  ArticleField _category;
-  ArticleField get category {
-    return _category = setField(_category, 'category', DbType.integer);
-  }
-
   bool _getIsDeleted;
 
   void _buildParameters() {
@@ -3791,19 +3655,15 @@ class ArticleFilterBuilder extends SearchCriteria {
   Future<BoolResult> delete([bool hardDelete = false]) async {
     _buildParameters();
     var r = BoolResult();
-    // Check sub records where in (Category) according to DeleteRule.NO_ACTION
-
-    final idListCategoryBYarticlesId = toListPrimaryKeySQL(false);
-    final resCategoryBYarticlesId = await Category()
+    // Delete sub records where in (Category) according to DeleteRule.CASCADE
+    final idListCategoryBYarticles = toListPrimaryKeySQL(false);
+    final resCategoryBYarticles = await Category()
         .select()
-        .where('articlesId IN (${idListCategoryBYarticlesId['sql']})',
-            parameterValue: idListCategoryBYarticlesId['args'])
-        .toCount();
-    if (resCategoryBYarticlesId > 0) {
-      return BoolResult(
-          success: false,
-          errorMessage:
-              'SQFENTITY ERROR: The DELETE statement conflicted with the REFERENCE RELATIONSHIP (Category.articlesId)');
+        .where('articles IN (${idListCategoryBYarticles['sql']})',
+            parameterValue: idListCategoryBYarticles['args'])
+        .delete(hardDelete);
+    if (!resCategoryBYarticles.success) {
+      return resCategoryBYarticles;
     }
 
     if (Article._softDeleteActivated && !hardDelete) {
@@ -3870,20 +3730,6 @@ class ArticleFilterBuilder extends SearchCriteria {
                   loadParents: false /*, loadedFields:_loadedFields*/);
         }
       } // END RELATIONSHIPS PRELOAD CHILD
-
-      // RELATIONSHIPS PRELOAD
-      if (preload || loadParents) {
-        loadedFields = loadedFields ?? [];
-        if (/*!_loadedFields.contains('categories.plCategory') && */ (preloadFields ==
-                null ||
-            loadParents ||
-            preloadFields.contains('plCategory'))) {
-          /*_loadedFields.add('categories.plCategory');*/
-          obj.plCategory = obj.plCategory ??
-              await obj.getCategory(
-                  loadParents: loadParents /*, loadedFields: _loadedFields*/);
-        }
-      } // END RELATIONSHIPS PRELOAD
 
     } else {
       obj = null;
@@ -4052,19 +3898,13 @@ class ArticleFields {
     return _fArticleText = _fArticleText ??
         SqlSyntax.setField(_fArticleText, 'articleText', DbType.text);
   }
-
-  static TableField _fCategory;
-  static TableField get category {
-    return _fCategory = _fCategory ??
-        SqlSyntax.setField(_fCategory, 'category', DbType.integer);
-  }
 }
 // endregion ArticleFields
 
 //region ArticleManager
 class ArticleManager extends SqfEntityProvider {
   ArticleManager()
-      : super(MyDbModel(),
+      : super(LawsBrowserDB(),
             tableName: _tableName,
             primaryKeyList: _primaryKeyList,
             whereStr: _whereStr);
@@ -4079,7 +3919,7 @@ class IdentitySequence {
   /// Assigns a new value when it is triggered and returns the new value
   /// returns Future<int>
   Future<int> nextVal([VoidCallback Function(int o) nextval]) async {
-    final val = await MyDbModelSequenceManager()
+    final val = await LawsBrowserDBSequenceManager()
         .sequence(SequenceIdentitySequence.getInstance, true);
     if (nextval != null) {
       nextval(val);
@@ -4090,7 +3930,7 @@ class IdentitySequence {
   /// Get the current value
   /// returns Future<int>
   Future<int> currentVal([VoidCallback Function(int o) currentval]) async {
-    final val = await MyDbModelSequenceManager()
+    final val = await LawsBrowserDBSequenceManager()
         .sequence(SequenceIdentitySequence.getInstance, false);
     if (currentval != null) {
       currentval(val);
@@ -4101,7 +3941,7 @@ class IdentitySequence {
   /// Reset sequence to start value
   /// returns start value
   Future<int> reset([VoidCallback Function(int o) currentval]) async {
-    final val = await MyDbModelSequenceManager()
+    final val = await LawsBrowserDBSequenceManager()
         .sequence(SequenceIdentitySequence.getInstance, false, reset: true);
     if (currentval != null) {
       currentval(val);
@@ -4112,7 +3952,7 @@ class IdentitySequence {
 
 /// End Region SEQUENCE IdentitySequence
 
-class MyDbModelSequenceManager extends SqfEntityProvider {
-  MyDbModelSequenceManager() : super(MyDbModel());
+class LawsBrowserDBSequenceManager extends SqfEntityProvider {
+  LawsBrowserDBSequenceManager() : super(LawsBrowserDB());
 }
 // END OF ENTITIES
