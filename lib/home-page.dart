@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:laws_browser/article-page.dart';
-import 'package:laws_browser/models/category-model.dart';
-import 'package:laws_browser/repositories/categories_repository.dart';
+import 'package:laws_browser/models/entities/category.model.dart';
 
 class HomePage extends StatelessWidget {
   final _paddingCoeficient = 8;

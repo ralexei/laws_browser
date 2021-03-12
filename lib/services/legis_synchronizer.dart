@@ -1,6 +1,7 @@
 import 'package:html_unescape/html_unescape.dart';
 import 'package:http/http.dart' as http;
-import 'package:laws_browser/models/model.dart';
+import 'package:laws_browser/models/entities/article.model.dart';
+import 'package:laws_browser/models/entities/category.model.dart';
 import 'package:laws_browser/utils/html_utils.dart';
 
 class LegisSynchronizer {
@@ -54,10 +55,6 @@ class LegisSynchronizer {
     return resultList;
   }
 
-  // List<Category> hierarchizeCategories(List<Category> categories){
-    
-  // }
-
   void _mapCategoriesRelations(Category parent, List<String> categories, [int index = 1]){
     if (index >= categories.length)
       return;
@@ -90,7 +87,7 @@ class LegisSynchronizer {
 
           var newCategory = Category(name: categoryName);
 
-          parent.children.add(newCategory);
+          parent. children.add(newCategory);
           _mapCategoriesRelations(newCategory, categories, index + 1);
         }        
         else
