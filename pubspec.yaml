@@ -10,6 +10,8 @@ dependencies:
   flutter:
     sdk: flutter
   sqflite:
+  moor: ^4.0.0-nullsafety
+  sqlite3_flutter_libs:
   objectbox: ^0.13.0-nullsafety.1
   objectbox_flutter_libs: any
   equatable: ^2.0.0
@@ -26,6 +28,7 @@ dev_dependencies:
     sdk: flutter
   build_runner:
   objectbox_generator: ^0.13.0-nullsafety.1
+  moor_generator:
 
 
 # For information on the generic Dart part of this file, see the

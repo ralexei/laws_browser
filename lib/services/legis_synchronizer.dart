@@ -17,7 +17,7 @@ class LegisSynchronizer {
   LegisSynchronizer._internalCtor();
 
   Future<List<Category>> parseLegis() async {
-    var url = "http://www.legis.md/cautare/showdetails/112573";
+    var url = "https://www.legis.md/cautare/showdetails/112573";
     var response = await http.get(url);
     var unescaper = new HtmlUnescape();
     var trimmedHtml = HtmlUtils.removeHtmlTags(response.body);

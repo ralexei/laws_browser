@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:laws_browser/models/entities/category.model.dart';
+import 'package:laws_browser/pages/article-page.dart';
+import 'package:laws_browser/persistence/repositories/categories.repository.dart';
 
 class HomePage extends StatelessWidget {
   final _paddingCoeficient = 8;
@@ -23,34 +25,34 @@ class HomePage extends StatelessWidget {
           }
           return Center(child: Text('Something went wrong'));
         },
-        // future: CategoriesRepository.instance.getHierarchized(),
+        future: CategoriesRepository.instance.getHierarchized(),
       ),
     );
   }
 
   Widget _buildTree(Category rootCategory, int level, BuildContext context) {
-    // if (rootCategory.children.isEmpty && rootCategory.articles.isNotEmpty)
-    //   return ListTile(
-    //     // contentPadding: EdgeInsetsDirectional.only(start: 18 * level.toDouble()),
-    //     onTap: () {
-    //       Navigator.push(
-    //         context,
-    //         MaterialPageRoute(builder: (context) => ArticlePage(articleText: rootCategory.articles.map((f) => f.articleText).join('\n\n'), categoryName: rootCategory.name))
-    //       );
-    //     },
-    //     title: Padding(
-    //       child: Text(rootCategory.name),
-    //       padding: EdgeInsetsDirectional.only(start: _paddingCoeficient * level.toDouble())
-    //     )
-    //   );
+    if (rootCategory.children.isEmpty && rootCategory.articles.isNotEmpty)
+      return ListTile(
+        contentPadding: EdgeInsetsDirectional.only(start: 18 * level.toDouble()),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ArticlePage(articleText: rootCategory.articles.map((f) => f.articleText).join('\n\n'), categoryName: rootCategory.name))
+          );
+        },
+        title: Padding(
+          child: Text(rootCategory.name),
+          padding: EdgeInsetsDirectional.only(start: _paddingCoeficient * level.toDouble())
+        )
+      );
     return ExpansionTile(
-      // leading: Icon(Icons.play_circle_outline),
+      leading: Icon(Icons.play_circle_outline),
       title: Padding(
         child: Text('rootCategory.name'),
         padding: EdgeInsetsDirectional.only(start: _paddingCoeficient * level.toDouble())
       ),
       key: PageStorageKey<Category>(rootCategory),
-      // children: rootCategory.children.map((m) => _buildTree(m, level + 1, context)).toList(),
+      children: rootCategory.children.map((m) => _buildTree(m, level + 1, context)).toList(),
     );
   }
 }

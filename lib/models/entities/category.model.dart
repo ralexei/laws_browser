@@ -4,7 +4,7 @@ import 'article.model.dart';
 
 @Entity()
 class Category {
-  int id;
+  int id = 0;
   String name;
   final articles = ToMany<Article>();
   final parent = ToOne<Category>();

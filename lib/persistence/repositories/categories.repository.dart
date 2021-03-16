@@ -10,14 +10,23 @@ class CategoriesRepository{
   CategoriesRepository._internalCtor();
 
   Future<List<Category>> getHierarchized() async {
+    
+    // var store = await BoxStore.getStore();
+
+    // var result = store.box<Category>().getAll();
+
+    // return result;
+  }
+
+  Future<void> insert(Category cat) async {
     var store = await BoxStore.getStore();
 
-    return store.box<Category>().getAll();
+    store.box<Category>().put(cat);
   }
 
   Future<void> insertRange(List<Category> categories) async {
-    var store = await BoxStore.getStore();
+    // var store = await BoxStore.getStore();
 
-    store.box<Category>().putMany(categories);
+    // store.box<Category>().putMany(categories);
   }
 }
