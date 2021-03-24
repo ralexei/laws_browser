@@ -1,6 +1,6 @@
 
-import 'package:laws_browser/models/entities/category.model.dart';
-import 'package:laws_browser/persistence/box-store.dart';
+import 'package:hive/hive.dart';
+import 'package:laws_browser/models/entities/category-model.dart';
 
 class CategoriesRepository{
   static final CategoriesRepository _instance = new CategoriesRepository._internalCtor();
@@ -10,23 +10,20 @@ class CategoriesRepository{
   CategoriesRepository._internalCtor();
 
   Future<List<Category>> getHierarchized() async {
-    
-    // var store = await BoxStore.getStore();
+    var box = Hive.box<Category>('categoriesBox');
 
-    // var result = store.box<Category>().getAll();
-
-    // return result;
+    return Future.value(box.values.toList());
   }
 
   Future<void> insert(Category cat) async {
-    var store = await BoxStore.getStore();
+    // var store = await BoxStore.getStore();
 
-    store.box<Category>().put(cat);
+    // store.box<Category>().put(cat);
   }
 
   Future<void> insertRange(List<Category> categories) async {
-    // var store = await BoxStore.getStore();
+    var box = Hive.box<Category>('categoriesBox');
 
-    // store.box<Category>().putMany(categories);
+    await box.addAll(categories);
   }
 }

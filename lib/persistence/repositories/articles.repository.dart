@@ -1,5 +1,4 @@
-import 'package:laws_browser/models/entities/article.model.dart';
-import 'package:laws_browser/persistence/box-store.dart';
+import 'package:laws_browser/models/entities/article-model.dart';
 
 class ArticlesRepository {
   static final ArticlesRepository _instance = new ArticlesRepository._internalCtor();
@@ -9,14 +8,16 @@ class ArticlesRepository {
   ArticlesRepository._internalCtor();
 
   Future<Article> getById(int id) async {
-    var store = await BoxStore.getStore();
 
-    return store.box<Article>().get(id);
+    return Future.value(Article(articleName: '1', articleText: '1'));
+    // var store = await BoxStore.getStore();
+
+    // return store.box<Article>().get(id);
   }
 
   Future<void> add(Article article) async {
-    var store = await BoxStore.getStore();
+    // var store = await BoxStore.getStore();
 
-    store.box<Article>().put(article);
+    // store.box<Article>().put(article);
   }
 }

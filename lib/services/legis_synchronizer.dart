@@ -1,7 +1,7 @@
 import 'package:html_unescape/html_unescape.dart';
 import 'package:http/http.dart' as http;
-import 'package:laws_browser/models/entities/article.model.dart';
-import 'package:laws_browser/models/entities/category.model.dart';
+import 'package:laws_browser/models/entities/article-model.dart';
+import 'package:laws_browser/models/entities/category-model.dart';
 import 'package:laws_browser/utils/html_utils.dart';
 
 class LegisSynchronizer {
@@ -18,7 +18,7 @@ class LegisSynchronizer {
 
   Future<List<Category>> parseLegis() async {
     var url = "https://www.legis.md/cautare/showdetails/112573";
-    var response = await http.get(url);
+    var response = await http.get(Uri.parse(url));
     var unescaper = new HtmlUnescape();
     var trimmedHtml = HtmlUtils.removeHtmlTags(response.body);
     var categories = _getCategories(trimmedHtml);
@@ -87,7 +87,7 @@ class LegisSynchronizer {
 
           var newCategory = Category(name: categoryName);
 
-          parent. children.add(newCategory);
+          parent.children!.add(newCategory);
           _mapCategoriesRelations(newCategory, categories, index + 1);
         }        
         else
@@ -97,7 +97,7 @@ class LegisSynchronizer {
             var articleName = categories[index].substring(0, articleNameEnd);
             var articleText = categories[index];
 
-            parent.articles.add(Article(articleName: articleName.trim(), articleText: articleText.trim()));
+            parent.articles!.add(Article(articleName: articleName.trim(), articleText: articleText.trim()));
           }
         }
       }

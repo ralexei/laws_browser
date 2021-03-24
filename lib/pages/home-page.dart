@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:laws_browser/models/entities/category.model.dart';
+import 'package:laws_browser/models/entities/category-model.dart';
 import 'package:laws_browser/pages/article-page.dart';
 import 'package:laws_browser/persistence/repositories/categories.repository.dart';
 
 class HomePage extends StatelessWidget {
-  final _paddingCoeficient = 8;
+  final _paddingCoeficient = 18;
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +17,9 @@ class HomePage extends StatelessWidget {
         builder: (context, projectSnap){
           if (projectSnap.hasData){
             return ListView.builder(
-              itemCount: projectSnap.data.length,
+              itemCount: projectSnap.data!.length,
               itemBuilder: (context, index) {
-                return _buildTree(projectSnap.data[index], 0, context);
+                return _buildTree(projectSnap.data![index], 0, context);
               }
             );
           }
@@ -31,13 +31,13 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildTree(Category rootCategory, int level, BuildContext context) {
-    if (rootCategory.children.isEmpty && rootCategory.articles.isNotEmpty)
+    if (rootCategory.children!.isEmpty && rootCategory.articles!.isNotEmpty)
       return ListTile(
-        contentPadding: EdgeInsetsDirectional.only(start: 18 * level.toDouble()),
+        contentPadding: EdgeInsetsDirectional.only(start: _paddingCoeficient * level.toDouble()),
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ArticlePage(articleText: rootCategory.articles.map((f) => f.articleText).join('\n\n'), categoryName: rootCategory.name))
+            MaterialPageRoute(builder: (context) => ArticlePage(articleText: rootCategory.articles!.map((f) => f.articleText).join('\n\n'), categoryName: rootCategory.name))
           );
         },
         title: Padding(
@@ -48,11 +48,11 @@ class HomePage extends StatelessWidget {
     return ExpansionTile(
       leading: Icon(Icons.play_circle_outline),
       title: Padding(
-        child: Text('rootCategory.name'),
+        child: Text(rootCategory.name),
         padding: EdgeInsetsDirectional.only(start: _paddingCoeficient * level.toDouble())
       ),
       key: PageStorageKey<Category>(rootCategory),
-      children: rootCategory.children.map((m) => _buildTree(m, level + 1, context)).toList(),
+      children: rootCategory.children!.map((m) => _buildTree(m, level + 1, context)).toList(),
     );
   }
 }
