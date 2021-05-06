@@ -33,6 +33,7 @@ dependencies:
   http:
   html_unescape:
   path_provider: ^2.0.1
+  flutter_parsed_text:
 
 dev_dependencies:
   flutter_test:

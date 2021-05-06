@@ -1,9 +1,9 @@
-
 import 'package:hive/hive.dart';
 import 'package:laws_browser/models/entities/category-model.dart';
 
-class CategoriesRepository{
-  static final CategoriesRepository _instance = new CategoriesRepository._internalCtor();
+class CategoriesRepository {
+  static final CategoriesRepository _instance =
+      new CategoriesRepository._internalCtor();
 
   static CategoriesRepository get instance => _instance;
 
@@ -11,8 +11,8 @@ class CategoriesRepository{
 
   Future<List<Category>> getHierarchized() async {
     var box = Hive.box<Category>('categoriesBox');
-
-    return Future.value(box.values.toList());
+    var categories = box.values.toList();
+    return Future.value(categories);
   }
 
   Future<void> insert(Category cat) async {

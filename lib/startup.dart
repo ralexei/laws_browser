@@ -6,6 +6,7 @@ import 'package:laws_browser/persistence/repositories/categories.repository.dart
 import 'package:laws_browser/services/legis_synchronizer.dart';
 
 class Startup {
+  static var initialized = false;
   static Future initialize() async {
     await initializeHive();
     await initializeDatabase();
@@ -15,12 +16,14 @@ class Startup {
   }
 
   static Future initializeHive() async {
+    if (initialized) return;
     var directory = await pathProvider.getApplicationDocumentsDirectory();
     Hive.init(directory.path);
     await registerHiveAdapters();
 
     await Hive.openBox('common');
-    await Hive.openBox<Category>('categoriesBox'); 
+    await Hive.openBox<Category>('categoriesBox');
+    initialized = true;
   }
 
   static Future registerHiveAdapters() async {
@@ -32,12 +35,12 @@ class Startup {
     final commonBox = Hive.box('common');
     final isDatabaseFresh = (commonBox.get('isDatabaseFresh') ?? false) as bool;
 
-    if (!isDatabaseFresh) {
+    // if (!isDatabaseFresh) {
       var categories = await LegisSynchronizer.instance.parseLegis();
 
       await CategoriesRepository.instance.insertRange(categories);
 
       commonBox.put('isDatabaseFresh', true);
-    }
+    // }
   }
 }
