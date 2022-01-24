@@ -15,15 +15,11 @@ class CategoriesRepository {
     return Future.value(categories);
   }
 
-  Future<void> insert(Category cat) async {
-    // var store = await BoxStore.getStore();
+  Future<void> insert(Category cat) async {}
 
-    // store.box<Category>().put(cat);
-  }
+  Future<void> insertRange(List<Category> categories, String codeName) async {
+    var articlesBox = await Hive.openLazyBox<Category>(codeName);
 
-  Future<void> insertRange(List<Category> categories) async {
-    var box = Hive.box<Category>('categoriesBox');
-
-    await box.addAll(categories);
+    await articlesBox.addAll(categories);
   }
 }

@@ -10,9 +10,6 @@ class Startup {
   static Future initialize() async {
     await initializeHive();
     await initializeDatabase();
-
-    var t2 = await CategoriesRepository.instance.getHierarchized();
-    var a = 4;
   }
 
   static Future initializeHive() async {
@@ -22,7 +19,7 @@ class Startup {
     await registerHiveAdapters();
 
     await Hive.openBox('common');
-    await Hive.openBox<Category>('categoriesBox');
+    // await Hive.openBox<Category>('categoriesBox');
     initialized = true;
   }
 
@@ -35,12 +32,12 @@ class Startup {
     final commonBox = Hive.box('common');
     final isDatabaseFresh = (commonBox.get('isDatabaseFresh') ?? false) as bool;
 
-    // if (!isDatabaseFresh) {
-      var categories = await LegisSynchronizer.instance.parseLegis();
+    if (!isDatabaseFresh) {
+      // var categories = await LegisSynchronizer.instance.parseLegis();
 
-      await CategoriesRepository.instance.insertRange(categories);
+      // await CategoriesRepository.instance.insertRange(categories);
 
       commonBox.put('isDatabaseFresh', true);
-    // }
+    }
   }
 }

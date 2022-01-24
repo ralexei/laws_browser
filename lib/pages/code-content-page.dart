@@ -4,13 +4,16 @@ import 'package:laws_browser/models/entities/category-model.dart';
 import 'package:laws_browser/pages/article-page.dart';
 import 'package:laws_browser/persistence/repositories/categories.repository.dart';
 
-class HomePage extends StatelessWidget {
+class CodeContentPage extends StatelessWidget {
   final double _paddingCoeficient = 14;
+  final String codeName;
+
+  CodeContentPage({required this.codeName});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Cod Civil')),
+      appBar: AppBar(title: Text(this.codeName)),
       body: FutureBuilder<List<Category>>(
         builder: (context, projectSnap) {
           if (projectSnap.hasData) {
