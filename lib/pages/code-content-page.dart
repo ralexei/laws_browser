@@ -3,17 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:laws_browser/models/entities/category-model.dart';
 import 'package:laws_browser/pages/article-page.dart';
 import 'package:laws_browser/persistence/repositories/categories.repository.dart';
+import 'package:laws_browser/utils/models/code.dart';
 
 class CodeContentPage extends StatelessWidget {
   final double _paddingCoeficient = 14;
-  final String codeName;
+  final Code code;
 
-  CodeContentPage({required this.codeName});
+  CodeContentPage({required this.code});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(this.codeName)),
+      appBar: AppBar(title: Text(this.code.name)),
       body: FutureBuilder<List<Category>>(
         builder: (context, projectSnap) {
           if (projectSnap.hasData) {
@@ -25,7 +26,7 @@ class CodeContentPage extends StatelessWidget {
           }
           return Center(child: Text('Something went wrong'));
         },
-        future: CategoriesRepository.instance.getHierarchized(),
+        future: CategoriesRepository.instance.getHierarchized(this.code.id),
       ),
     );
   }

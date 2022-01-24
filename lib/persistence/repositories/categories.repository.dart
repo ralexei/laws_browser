@@ -9,17 +9,23 @@ class CategoriesRepository {
 
   CategoriesRepository._internalCtor();
 
-  Future<List<Category>> getHierarchized() async {
-    var box = Hive.box<Category>('categoriesBox');
+  Future<List<Category>> getHierarchized(String boxName) async {
+    var box = await Hive.openBox<Category>(boxName);
     var categories = box.values.toList();
+
     return Future.value(categories);
   }
 
   Future<void> insert(Category cat) async {}
 
-  Future<void> insertRange(List<Category> categories, String codeName) async {
-    var articlesBox = await Hive.openLazyBox<Category>(codeName);
+  Future<void> insertRange(List<Category> categories, String boxName) async {
+    var commonBox = await Hive.openBox('common');
 
-    await articlesBox.addAll(categories);
+    if (!commonBox.containsKey(boxName)) {
+      var box = await Hive.openBox<Category>(boxName);
+
+      await commonBox.put(boxName, true);
+      await box.addAll(categories);
+    }
   }
 }

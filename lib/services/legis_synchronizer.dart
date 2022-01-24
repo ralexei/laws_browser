@@ -1,4 +1,3 @@
-import 'package:html_unescape/html_unescape.dart';
 import 'package:http/http.dart' as http;
 import 'package:laws_browser/models/entities/article-model.dart';
 import 'package:laws_browser/models/entities/category-model.dart';
@@ -19,10 +18,8 @@ class LegisSynchronizer {
 
   LegisSynchronizer._internalCtor();
 
-  Future<List<Category>> parseLegis() async {
-    var url = "https://www.legis.md/cautare/showdetails/109495";
+  Future<List<Category>> parseLegis(String url) async {
     var response = await http.get(Uri.parse(url));
-    var unescaper = new HtmlUnescape();
     var trimmedHtml = HtmlUtils.removeHtmlTags(response.body);
     var categories = _getCategories(trimmedHtml);
 
