@@ -18,7 +18,7 @@ class Startup {
     Hive.init(directory.path);
     await registerHiveAdapters();
 
-    await Hive.openBox('common');
+    await Hive.openBox<dynamic>('common');
     // await Hive.openBox<Category>('categoriesBox');
     initialized = true;
   }
@@ -29,15 +29,15 @@ class Startup {
   }
 
   static Future initializeDatabase() async {
-    final commonBox = Hive.box('common');
-    final isDatabaseFresh = (commonBox.get('isDatabaseFresh') ?? false) as bool;
+    // final commonBox = Hive.box('common');
+    // final isDatabaseFresh = (commonBox.get('isDatabaseFresh') ?? false) as bool;
 
-    if (!isDatabaseFresh) {
-      // var categories = await LegisSynchronizer.instance.parseLegis();
+    // if (!isDatabaseFresh) {
+    //   // // var categories = await LegisSynchronizer.instance.parseLegis();
 
-      // await CategoriesRepository.instance.insertRange(categories);
+    //   // // await CategoriesRepository.instance.insertRange(categories);
 
-      commonBox.put('isDatabaseFresh', true);
-    }
+    //   commonBox.put('isDatabaseFresh', true);
+    // }
   }
 }

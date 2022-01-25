@@ -19,6 +19,8 @@ class LegisSynchronizer {
   LegisSynchronizer._internalCtor();
 
   Future<List<Category>> parseLegis(String url) async {
+    _categories.clear();
+
     var response = await http.get(Uri.parse(url));
     var trimmedHtml = HtmlUtils.removeHtmlTags(response.body);
     var categories = _getCategories(trimmedHtml);
@@ -79,7 +81,8 @@ class LegisSynchronizer {
     while (index < categories.length) {
       var categoryPriority = _getCategoryHierarchyProperty(categories[index]);
 
-      if (categoryPriority == parentPriority && parentPriority == biggestPriority) break;
+      if (categoryPriority == parentPriority &&
+          parentPriority == biggestPriority) break;
 
       if (categoryPriority <= parentPriority) return;
 
@@ -135,8 +138,7 @@ class LegisSynchronizer {
       return 6;
     else if (categoryName.contains('§'))
       return 7;
-    else if (categoryName.contains("Articolul"))
-      return 8;
+    else if (categoryName.contains("Articolul")) return 8;
 
     return 0;
   }

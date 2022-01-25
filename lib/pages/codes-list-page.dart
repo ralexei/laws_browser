@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:laws_browser/models/entities/category-model.dart';
 import 'package:laws_browser/pages/code-content-page.dart';
 import 'package:laws_browser/persistence/repositories/categories.repository.dart';
 import 'package:laws_browser/services/legis_synchronizer.dart';
@@ -25,9 +26,9 @@ class CodesListPage extends StatelessWidget {
   }
 
   Future<void> _codeTap(BuildContext context, Code code) async {
-    var commonBox = await Hive.openBox('common');
+    var commonBox = await Hive.openBox<dynamic>('common');
 
-    var boxi = await Hive.openBox(code.id);
+    var boxi = await Hive.openBox<Category>(code.id);
     var size = File(boxi.path!).lengthSync();
 
     if (!commonBox.containsKey(code.id)) {

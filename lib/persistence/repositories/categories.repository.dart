@@ -19,7 +19,7 @@ class CategoriesRepository {
   Future<void> insert(Category cat) async {}
 
   Future<void> insertRange(List<Category> categories, String boxName) async {
-    var commonBox = await Hive.openBox('common');
+    var commonBox = await Hive.openBox<dynamic>('common');
 
     if (!commonBox.containsKey(boxName)) {
       var box = await Hive.openBox<Category>(boxName);
