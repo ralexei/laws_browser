@@ -1,25 +1,32 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:laws_browser/pages/home-page.dart';
-import 'package:laws_browser/pages/splash-screen.dart';
+import 'package:laws_browser/components/activity_indicator.dart';
+import 'package:laws_browser/pages/home_page.dart';
+import 'package:laws_browser/pages/splash_screen.dart';
 import 'package:laws_browser/startup.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 void main() async {
-  runApp(LBApp());
+  HttpOverrides.global = MyHttpOverrides();
+  runApp(const LBApp());
 }
 
 class LBApp extends StatelessWidget {
+
+  const LBApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        localizationsDelegates: [
+        localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate
         ],
-        supportedLocales: [
+        supportedLocales: const [
           Locale('en', ''),
           Locale('ro', '')
         ],
@@ -27,10 +34,20 @@ class LBApp extends StatelessWidget {
             future: Startup.initialize(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
-                return HomePage();
+                return const ActivityIndicator(
+                  child: HomePage()
+                );
               } else {
-                return SplashScreen();
+                return const SplashScreen();
               }
             }));
+  }
+}
+
+ class MyHttpOverrides extends HttpOverrides{
+  @override
+  HttpClient createHttpClient(SecurityContext? context){
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port)=> true;
   }
 }

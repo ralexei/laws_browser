@@ -1,9 +1,9 @@
 import 'package:hive/hive.dart';
-import 'package:laws_browser/models/entities/category-model.dart';
+import 'package:intl/intl.dart';
+import 'package:laws_browser/models/entities/category_model.dart';
 
 class CategoriesRepository {
-  static final CategoriesRepository _instance =
-      new CategoriesRepository._internalCtor();
+  static final CategoriesRepository _instance = CategoriesRepository._internalCtor();
 
   static CategoriesRepository get instance => _instance;
 
@@ -16,16 +16,33 @@ class CategoriesRepository {
     return Future.value(categories);
   }
 
-  Future<void> insert(Category cat) async {}
+  Future<void> tryClear(String boxName) async {
+    var box = await Hive.openBox<Category>(boxName);
 
-  Future<void> insertRange(List<Category> categories, String boxName) async {
-    var commonBox = await Hive.openBox<dynamic>('common');
-
-    if (!commonBox.containsKey(boxName)) {
-      var box = await Hive.openBox<Category>(boxName);
-
-      await commonBox.put(boxName, true);
-      await box.addAll(categories);
+    if (box.isEmpty) {
+      return;
     }
+
+    box.clear();
+  }
+
+  Future<void> insertRange(List<Category> categories, String categoryId) async {
+    var commonBox = await Hive.openBox('common');
+    var box = await Hive.openBox<Category>(categoryId);
+    var date = DateTime.now();
+    var formatter = DateFormat('yyyy-MM-dd');
+
+    await commonBox.put(categoryId, formatter.format(date));
+    await box.addAll(categories);
+  }
+
+  Future<String?> getLastUpdate(String categoryId) async {
+    var commonBox = await Hive.openBox('common');
+
+    if (!commonBox.containsKey(categoryId)) {
+      return null;
+    }
+
+    return commonBox.get(categoryId);
   }
 }

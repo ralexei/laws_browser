@@ -1,26 +1,17 @@
 import 'package:http/http.dart' as http;
-import 'package:laws_browser/models/entities/article-model.dart';
-import 'package:laws_browser/models/entities/category-model.dart';
+import 'package:laws_browser/models/entities/article_model.dart';
+import 'package:laws_browser/models/entities/category_model.dart';
+import 'package:laws_browser/services/abstractions/legis_synchronizer.dart';
 import 'package:laws_browser/utils/html_utils.dart';
 
-class LegisSynchronizer {
-  static final LegisSynchronizer _instance =
-      new LegisSynchronizer._internalCtor();
-
-  static LegisSynchronizer get instance => _instance;
-
-  final RegExp _sectionRegEx = new RegExp(r'Sec.*iunea.+');
-  final RegExp _subsectionRegEx = new RegExp(r'Subsec.*iunea.+');
-
+class DefaultLegisSynchronizer implements LegisSynchronizer {
+  final RegExp _sectionRegEx = RegExp(r'Sec.*iunea.+');
+  final RegExp _subsectionRegEx = RegExp(r'Subsec.*iunea.+');
+  final List<Category> _categories = <Category>[];
   int biggestPriority = 1;
 
-  List<Category> _categories = <Category>[];
-
-  LegisSynchronizer._internalCtor();
-
+  @override
   Future<List<Category>> parseLegis(String url) async {
-    _categories.clear();
-
     var response = await http.get(Uri.parse(url));
     var trimmedHtml = HtmlUtils.removeHtmlTags(response.body);
     var categories = _getCategories(trimmedHtml);
@@ -37,7 +28,7 @@ class LegisSynchronizer {
   }
 
   List<String> _getCategories(String trimmedHtml) {
-    var categoryRegEx = new RegExp(
+    var categoryRegEx = RegExp(
         r'(PARTEA.+(<br />)?(\n)?.+|Cartea.+(<br />)?(\n)?.+|T i t l u l.+(<br />)?(\n)?.+|Capitolul.+(<br />)?(\n)?.+|Sec.*iunea.+(<br />)?(\n)?.+|Subsec.*iunea.+(<br />)?(\n)?.+|§.+(<br />)?(\n)?.+|Articolul.+\.?)');
     var indexA = 0;
     var indexB = 0;
@@ -48,9 +39,11 @@ class LegisSynchronizer {
       indexB = trimmedHtml.indexOf(categoryRegEx, indexA + 1);
 
       if (indexB == -1 && indexA != -1)
+      {
         indexB = trimmedHtml.indexOf(
-            new RegExp(r'^(?:[\t ]*(?:\r?\n|\r))+', multiLine: true),
+            RegExp(r'^(?:[\t ]*(?:\r?\n|\r))+', multiLine: true),
             indexA + 1);
+      }
 
       if (indexA == -1 || indexB == -1) break;
 
@@ -81,8 +74,7 @@ class LegisSynchronizer {
     while (index < categories.length) {
       var categoryPriority = _getCategoryHierarchyProperty(categories[index]);
 
-      if (categoryPriority == parentPriority &&
-          parentPriority == biggestPriority) break;
+      if (categoryPriority == parentPriority && parentPriority == biggestPriority) break;
 
       if (categoryPriority <= parentPriority) return;
 
@@ -100,7 +92,7 @@ class LegisSynchronizer {
         } else {
           if (categoryPriority != 0) {
             var articleNameEnd =
-                categories[index].indexOf(new RegExp(r'[^a-z]'));
+                categories[index].indexOf(RegExp(r'[^a-z]'));
             var articleName = categories[index].substring(0, articleNameEnd);
             var articleText = categories[index];
 
@@ -118,27 +110,31 @@ class LegisSynchronizer {
       _categories.add(parent);
 
       if (index < categories.length)
+      {
         _mapCategoriesRelations(
             Category(name: categories[index]), categories, index + 1);
+      }
     }
   }
 
   int _getCategoryHierarchyProperty(String categoryName) {
-    if (categoryName.contains("PARTEA"))
+    if (categoryName.contains("PARTEA")) {
       return 1;
-    else if (categoryName.contains("Cartea"))
+    } else if (categoryName.contains("Cartea")) {
       return 2;
-    else if (categoryName.contains("T i t l u l"))
+    } else if (categoryName.contains("T i t l u l")) {
       return 3;
-    else if (categoryName.contains("Capitolul"))
+    } else if (categoryName.contains("Capitolul")) {
       return 4;
-    else if (categoryName.contains(_sectionRegEx))
+    } else if (categoryName.contains(_sectionRegEx)) {
       return 5;
-    else if (categoryName.contains(_subsectionRegEx))
+    } else if (categoryName.contains(_subsectionRegEx)) {
       return 6;
-    else if (categoryName.contains('§'))
+    } else if (categoryName.contains('§')) {
       return 7;
-    else if (categoryName.contains("Articolul")) return 8;
+    } else if (categoryName.contains("Articolul")) {
+      return 8;
+    }
 
     return 0;
   }
@@ -157,7 +153,7 @@ class LegisSynchronizer {
     sentences.removeWhere((r) => r == '');
     sentences = sentences.map(_capitalize).toList();
 
-    return firstSentence.trim() + '. ' + sentences.join('. ');
+    return '${firstSentence.trim()}. ${sentences.join('. ')}';
   }
 
   /* For the bad days
@@ -165,7 +161,7 @@ class LegisSynchronizer {
     var indexA = 0;
     var indexB = 0;
     var resultList = List<String>();
-    var articleRegExp = new RegExp(r'Articolul \d+\.');
+    var articleRegExp = RegExp(r'Articolul \d+\.');
 
     do {
       indexA = trimmedHtml.indexOf(articleRegExp, indexA);
@@ -173,7 +169,7 @@ class LegisSynchronizer {
       indexB = trimmedHtml.indexOf(articleRegExp, indexA + 1);
  
       if (indexB == -1 && indexA != -1)
-        indexB = trimmedHtml.indexOf(new RegExp(r'^(?:[\t ]*(?:\r?\n|\r))+', multiLine: true), indexA + 1);
+        indexB = trimmedHtml.indexOf(RegExp(r'^(?:[\t ]*(?:\r?\n|\r))+', multiLine: true), indexA + 1);
       
       if (indexA == -1 || indexB == -1)
         break;

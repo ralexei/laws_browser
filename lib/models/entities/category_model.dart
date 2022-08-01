@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
 
-import 'article-model.dart';
+import 'article_model.dart';
 
 part 'category-model.g.dart';
 

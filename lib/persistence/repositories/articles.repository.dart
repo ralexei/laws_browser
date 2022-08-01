@@ -1,7 +1,7 @@
-import 'package:laws_browser/models/entities/article-model.dart';
+import 'package:laws_browser/models/entities/article_model.dart';
 
 class ArticlesRepository {
-  static final ArticlesRepository _instance = new ArticlesRepository._internalCtor();
+  static final ArticlesRepository _instance = ArticlesRepository._internalCtor();
 
   static ArticlesRepository get instance => _instance;
 

@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_parsed_text/flutter_parsed_text.dart';
 
@@ -6,7 +5,7 @@ class ArticlePage extends StatelessWidget {
   final String? articleText;
   final String? categoryName;
   
-  ArticlePage({@required this.articleText, @required this.categoryName});
+  const ArticlePage({super.key, @required this.articleText, @required this.categoryName});
 
   @override
   Widget build(BuildContext context) {
@@ -22,19 +21,19 @@ class ArticlePage extends StatelessWidget {
           child: Column(
             children: <Widget>[
               Padding(
+                padding: const EdgeInsets.all(8),
                 child: ParsedText(
                   text: articleText!,
                   style: Theme.of(context).textTheme.bodyText1,
                   parse: <MatchText>[
                      MatchText(
                       pattern: articlePattern,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold
                       )
                     ),
                   ],
-                ),
-                padding: EdgeInsets.all(8),
+                )
               )
             ]
           )
