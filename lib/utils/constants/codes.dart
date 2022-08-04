@@ -4,7 +4,7 @@ List<Code> codes = <Code>[
   Code(
     id: 'codCivil',
     name: 'Codul civil',
-    url: 'http://www.legis.md/cautare/showdetails/109495',
+    url: 'https://www.legis.md/cautare/showdetails/129081',
     searchTerm: 'CODUL CIVIL'),
   Code(
     id: 'codPenal',

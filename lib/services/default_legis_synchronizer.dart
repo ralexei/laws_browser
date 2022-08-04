@@ -29,7 +29,14 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
 
   List<String> _getCategories(String trimmedHtml) {
     var categoryRegEx = RegExp(
-        r'(PARTEA.+(<br />)?(\n)?.+|Cartea.+(<br />)?(\n)?.+|T i t l u l.+(<br />)?(\n)?.+|Capitolul.+(<br />)?(\n)?.+|Sec.*iunea.+(<br />)?(\n)?.+|Subsec.*iunea.+(<br />)?(\n)?.+|§.+(<br />)?(\n)?.+|Articolul.+\.?)');
+        r'(PARTEA.+(<br />)?(\n)?.+|'
+        r'Cartea.+(<br />)?(\n)?.+|'
+        r'T i t l u l.+(<br />)?(\n)?.+|'
+        r'Capitolul.+(<br />)?(\n)?.+|'
+        r'Sec.*iunea.+(<br />)?(\n)?.+|'
+        r'Subsec.*iunea.+(<br />)?(\n)?.+|'
+        r'§.+(<br />)?(\n)?.+|'
+        r'Articolul.+\.?)');
     var indexA = 0;
     var indexB = 0;
     var resultList = <String>[];
@@ -79,9 +86,9 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
       if (categoryPriority <= parentPriority) return;
 
       if (categoryPriority == closestChildPrority) {
-        if (categoryPriority < 7) {
-          var categoryName = categories[index];
+        var categoryName = categories[index];
 
+        if (categoryPriority < 8) {
           // categoryName = categoryPriority.toString() + (categoryName.contains('T i t l u l') ? categories[index].replaceFirst('T i t l u l', 'Titlul') : categoryName);
           // categoryName = HtmlUtils.removeHtmlTags(categoryName);
 
@@ -91,12 +98,14 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
           _mapCategoriesRelations(newCategory, categories, index + 1);
         } else {
           if (categoryPriority != 0) {
-            var articleNameEnd =
-                categories[index].indexOf(RegExp(r'[^a-z]'));
-            var articleName = categories[index].substring(0, articleNameEnd);
-            var articleText = categories[index];
+            var articleNumberIndex = categoryName.indexOf(RegExp(r'[0-9]'));
+            var articleNameEnd = categoryName.indexOf(RegExp(r'[^0-9]'), articleNumberIndex);
+            var articleId = categoryName.substring(articleNumberIndex, articleNameEnd);
+            var articleName = categoryName.substring(0, articleNameEnd);
+            var articleText = categoryName;
 
             parent.articles!.add(Article(
+                id: int.tryParse(articleId) ?? 0,
                 articleName: articleName.trim(),
                 articleText: articleText.trim()));
           }

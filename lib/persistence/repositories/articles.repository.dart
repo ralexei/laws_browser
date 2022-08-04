@@ -7,14 +7,6 @@ class ArticlesRepository {
 
   ArticlesRepository._internalCtor();
 
-  Future<Article> getById(int id) async {
-
-    return Future.value(Article(articleName: '1', articleText: '1'));
-    // var store = await BoxStore.getStore();
-
-    // return store.box<Article>().get(id);
-  }
-
   Future<void> add(Article article) async {
     // var store = await BoxStore.getStore();
 

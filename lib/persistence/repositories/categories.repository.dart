@@ -23,7 +23,7 @@ class CategoriesRepository {
       return;
     }
 
-    box.clear();
+    await box.clear();
   }
 
   Future<void> insertRange(List<Category> categories, String categoryId) async {

@@ -17,9 +17,10 @@ class ArticleAdapter extends TypeAdapter<Article> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Article(
+      id: fields[0] as int,
       articleText: fields[2] as String,
       articleName: fields[1] as String,
-    )..id = fields[0] as int;
+    );
   }
 
   @override

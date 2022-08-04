@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
 
-part 'article-model.g.dart';
+part 'article_model.g.dart';
 
 @HiveType(typeId: 1)
 class Article {
@@ -11,5 +11,5 @@ class Article {
   @HiveField(2)
   String articleText;
 
-  Article({required this.articleText, required this.articleName});
+  Article({required this.id, required this.articleText, required this.articleName});
 }

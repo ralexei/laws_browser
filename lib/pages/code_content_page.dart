@@ -32,32 +32,41 @@ class CodeContentPage extends StatelessWidget {
 
   Widget _buildTree(Category rootCategory, int level, BuildContext context) {
     if (rootCategory.children!.isEmpty && rootCategory.articles!.isNotEmpty) {
-      return ListTile(
+      return _createExtremeCategoryTile(rootCategory, level, context);
+    }
+
+    return _createExpandableTile(rootCategory, level, context);
+  }
+
+  Widget _createExtremeCategoryTile(Category category, int level, BuildContext context) {
+    return Card(
+      elevation: 2,
+      child: ListTile(
+        subtitle: Text('Articolele ${category.articles!.first.id}-${category.articles!.last.id}'),
+        trailing: const Icon(Icons.read_more),
         onTap: () {
           Navigator.push(
               context,
               MaterialPageRoute(
                   builder: (context) => ArticlePage(
-                      articleText: rootCategory.articles!
-                          .map((f) => f.articleText)
-                          .join('\n\n'),
-                      categoryName: rootCategory.name)));
+                      articles: category.articles!,
+                      categoryName: category.name)));
         },
-        title: Padding(
-            padding:
-                EdgeInsets.only(left: _paddingCoeficient * level.toDouble()),
-            child: Text(rootCategory.name)),
-      );
-    }
+        title: Text(category.name),
+      )
+    );
+  }
 
-    return ExpansionTile(
-        title: Padding(
-            padding:
-                EdgeInsets.only(left: _paddingCoeficient * level.toDouble()),
-            child: Text(rootCategory.name)),
-        key: PageStorageKey<Category>(rootCategory),
-        children: rootCategory.children!
-            .map((m) => _buildTree(m, level + 1, context))
-            .toList());
+  Widget _createExpandableTile(Category rootCategory, int level, BuildContext context) {
+    return Card(
+      elevation: 2,
+      child: ExpansionTile(
+          title: Text(rootCategory.name),
+          key: PageStorageKey<Category>(rootCategory),
+          children: rootCategory.children!
+              .map((m) => _buildTree(m, level + 1, context))
+              .toList()
+      )
+    );
   }
 }
