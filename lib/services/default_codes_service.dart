@@ -9,7 +9,7 @@ class DefaultCodesService implements CodesService {
   @override
   Future downloadCode(Code code) async {
     var parser = GetIt.instance.get<LegisSynchronizer>();
-    var categories = await parser.parseLegis(code.url); 
+    var categories = await parser.parseLegis(code); 
 
     await CategoriesRepository.instance.tryClear(code.id);
     await CategoriesRepository.instance.insertRange(categories, code.id);

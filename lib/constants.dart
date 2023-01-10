@@ -1,3 +1,4 @@
 class Constants {
   static const String DbName = "MDLawsBrowser.db";
+  static const String BaseLegisUrl = "www.legis.md";
 }

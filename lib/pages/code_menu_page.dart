@@ -14,7 +14,7 @@ class CodeMenuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(code.id)),
+      appBar: AppBar(title: Text(code.name)),
       body: ListView(
         children: [
           Card(

@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:laws_browser/persistence/repositories/categories.repository.dart';
@@ -38,15 +40,17 @@ class _ActualizeButtonState extends State<ActualizeButton> {
           );
   }
 
-  void _redownloadCode(BuildContext context) async {
+  void _redownloadCode(BuildContext context) {
     var codeService = GetIt.instance.get<CodesService>();
 
     ActivityIndicator.of(context).show();
-
-    codeService.downloadCode(widget._code).then((value) {
-      ActivityIndicator.of(context).hide();
-      setState(() {});
-    });
+    codeService.downloadCode(widget._code)
+      .then((value) {
+        setState(() {});
+      })
+      .whenComplete(() {
+        ActivityIndicator.of(context).hide();
+      });
   }
 
     Future<String> _getLastUpdateDate() async {
