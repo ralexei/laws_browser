@@ -8,18 +8,6 @@ import 'package:laws_browser/services/abstractions/legis_synchronizer.dart';
 import 'package:laws_browser/utils/html_utils.dart';
 import 'package:laws_browser/utils/models/code.dart';
 
-enum CategoryTypes {
-  none,
-  partea,
-  cartea,
-  titlul,
-  capitolul,
-  sectiune,
-  subsectiune,
-  paragraf,
-  articol
-}
-
 class DefaultLegisSynchronizer implements LegisSynchronizer {
   final RegExp _sectionRegEx = RegExp(r'Sec.*iunea.+');
   final RegExp _subsectionRegEx = RegExp(r'Subsec.*iunea.+');
@@ -39,10 +27,10 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
     }
 
     response = _removeCategoriesArtifacts(response);
+    response = HtmlUtils.fixSupTags(response);
     var document = parse(response);
-    _documentText = HtmlUtils
-      .removeHtmlTags(response)
-      .replaceAll(RegExp(r'(?:[\t ]*(?:\r?\n|\r))+'), '\n');
+    _documentText = HtmlUtils.removeHtmlDocumentTags(document)
+        .replaceAll(RegExp(r'(?:[\t ]*(?:\r?\n|\r))+'), '\n');
 
     // var trimmedHtml = HtmlUtils.removeHtmlTags(response);
     var categories = await _getCategories(document);
@@ -69,11 +57,9 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
         r'Articolul.+\.?)');
     var resultList = <String>[];
     var categoryElements = document.getElementsByTagName('strong');
-    var categoriesBodies =  categoryElements
-        .map((e) => e.parent!.text.trim())
-        .toList();
-    var categoriesConcatinated = categoriesBodies
-        .join('\n');
+    var categoriesBodies =
+        categoryElements.map((e) => e.parent!.text.trim()).toList();
+    var categoriesConcatinated = categoriesBodies.join('\n');
     var indexA = 0;
     var indexB = 0;
     var previousHierarchy = 0;
@@ -99,16 +85,21 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
 
       if (previousHierarchy != 0 && previousHierarchy > currentHierarchy) {
         indexB = categoriesConcatinated.indexOf(categoryRegEx, indexB + 1);
-        
+
         articleSubstring = categoriesConcatinated.substring(indexA, indexB);
         currentHierarchy = _getCategoryHierarchyProperty(articleSubstring);
       }
 
       if (currentHierarchy == CategoryTypes.articol.index) {
         var articleNumberIndex = articleSubstring.indexOf(RegExp(r'[0-9]'));
-        
-        articleNumberIndex =  articleSubstring.indexOf(RegExp(r'[^0-9]'), articleNumberIndex);
-        articleSubstring = articleSubstring.substring(0, articleNumberIndex < 0 ? articleSubstring.length : articleNumberIndex);
+
+        articleNumberIndex =
+            articleSubstring.indexOf(RegExp(r'[^0-9]'), articleNumberIndex);
+        articleSubstring = articleSubstring.substring(
+            0,
+            articleNumberIndex < 0
+                ? articleSubstring.length
+                : articleNumberIndex);
         previousHierarchy = 0;
       } else {
         if (previousHierarchy != 8 && previousHierarchy > currentHierarchy) {
@@ -161,7 +152,8 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
           var articleText = '';
 
           if (index + 1 < categories.length) {
-            articleText = _parseArticleBody(categoryName, categories[index + 1]);
+            articleText =
+                _parseArticleBody(categoryName, categories[index + 1]);
           } else {
             articleText = _parseArticleBody(categoryName);
           }
@@ -215,13 +207,15 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
   }
 
   String _parseArticleBody(String articleName, [String? nextCategory]) {
-    var articleStartIndex = _documentText.indexOf(articleName, lastArticleIndex);
+    var articleStartIndex =
+        _documentText.indexOf(articleName, lastArticleIndex);
     var articleEndIndex = 0;
 
     if (nextCategory != null) {
       nextCategory = nextCategory.split(RegExp(r'(?:\r?\n|\r)')).first;
 
-      articleEndIndex = _documentText.indexOf(nextCategory, articleStartIndex + 1);
+      articleEndIndex =
+          _documentText.indexOf(nextCategory, articleStartIndex + 1);
     } else {
       articleEndIndex = _documentText.indexOf(
           RegExp(r'^(?:[\t ]*(?:\r?\n|\r))+', multiLine: true),
@@ -258,6 +252,7 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
   String _removeCategoriesArtifacts(String input) {
     return input
         .replaceAll('T i t l u l', 'Titlul')
+        .replaceAll('TITLUL', 'Titlul')
         .replaceAll('C A R T E A', 'Cartea')
         .replaceAll('PARTEA', 'Partea')
         .replaceAll('Aricolul', "Articolul");
