@@ -6,14 +6,26 @@ import 'package:laws_browser/services/abstractions/search_service.dart';
 import 'package:laws_browser/utils/helpers/string_helpers.dart';
 
 class DefaultSearchService extends SearchService {
-
   @override
   Future<List<SearchResult<Article>>> execute(SearchRequest<Category> request) async {
     var searchResults = _getSearchResults(request);
 
-    searchResults.sort(((a, b) => b.score.compareTo(a.score)));
+    searchResults.sort(((a, b) => compareResults(a, b)));
 
     return searchResults;
+  }
+
+  int compareResults(SearchResult<Article> a, SearchResult<Article> b) {
+    var cmp = b.score.compareTo(a.score);
+
+    if (cmp != 0) {
+      return cmp;
+    }
+
+    var articleA = a.result.articleName;
+    var articleB = b.result.articleName;
+
+    return StringHelpers.getIntegerFromString(articleA).compareTo(StringHelpers.getIntegerFromString(articleB));
   }
 
   List<SearchResult<Article>> _getSearchResults(SearchRequest<Category> request) {
@@ -21,11 +33,11 @@ class DefaultSearchService extends SearchService {
     var extremeCategories = _getExtremeCategories(request.items).toList();
 
     for (var item in extremeCategories) {
-      if (item.articles == null) {
+      if (item.articles.isEmpty) {
         continue;
       }
 
-      for (var article in item.articles!) {
+      for (var article in item.articles) {
         var fullTermResult = _findFullTermMatch(article, request);
 
         if (fullTermResult != null) {
@@ -61,10 +73,7 @@ class DefaultSearchService extends SearchService {
     var term = StringHelpers.removeDiacritics(request.term);
 
     if (StringHelpers.removeDiacritics(articleText).contains(term)) {
-      return SearchResult.fullMatch(
-        result: article,
-        score: 1,
-        matchedFullString: request.term);
+      return SearchResult.fullMatch(result: article, score: 1, matchedFullString: request.term);
     }
 
     return null;
@@ -96,10 +105,10 @@ class DefaultSearchService extends SearchService {
 
   Iterable<Category> _getExtremeCategories(List<Category> categories) sync* {
     for (var category in categories) {
-      if (category.articles!.isNotEmpty) {
+      if (category.articles.isNotEmpty) {
         yield category;
       } else {
-        yield* _getExtremeCategories(category.children ?? []);
+        yield* _getExtremeCategories(category.children);
       }
     }
   }

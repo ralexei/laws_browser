@@ -1,5 +1,6 @@
-import 'package:laws_browser/utils/models/code.dart';
+import 'package:laws_browser/models/common/code.dart';
 
 abstract class CodesService {
-  Future downloadCode(Code code);
+  Future<bool> downloadCode(Code code);
+  Future<String?> getLastUpdate(Code code);
 }

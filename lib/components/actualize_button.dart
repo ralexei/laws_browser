@@ -1,18 +1,13 @@
-import 'dart:isolate';
-
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
-import 'package:laws_browser/persistence/repositories/categories.repository.dart';
-import 'package:laws_browser/services/abstractions/codes_service.dart';
-import 'package:laws_browser/utils/models/code.dart';
-
-import 'activity_indicator.dart';
+import 'package:laws_browser/models/common/code.dart';
+import 'package:laws_browser/utils/constants/download_messages.dart';
+import 'package:laws_browser/utils/helpers/download_helper.dart';
+import 'package:provider/provider.dart';
 
 class ActualizeButton extends StatefulWidget {
+  final Code code;
 
-  final Code _code;
-
-  const ActualizeButton(this._code, {super.key});
+  const ActualizeButton(this.code, {super.key});
 
   @override
   State<StatefulWidget> createState() => _ActualizeButtonState();
@@ -21,41 +16,24 @@ class ActualizeButton extends StatefulWidget {
 class _ActualizeButtonState extends State<ActualizeButton> {
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-            title: const Text('Actualizeaza'),
-            leading: const Icon(Icons.refresh),
-            trailing: FutureBuilder<String>(
-              future: _getLastUpdateDate(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return Text(snapshot.data!);
-                } else if (snapshot.hasError) {
-                  return const Text('Failed');
-                } else {
-                  return const CircularProgressIndicator();
-                }
-              },
-            ),
-            onTap: () => _redownloadCode(context)
-          );
+    return ChangeNotifierProvider.value(
+      value: widget.code,
+      child: ListTile(
+        title: const Text('Actualizeaza'),
+        leading: const Icon(Icons.refresh),
+        trailing: Consumer<Code>(
+          builder: (context, code, child) {
+            return Text(code.lastUpdate ?? '');
+          },
+        ),
+        onTap: () async {
+          await _redownloadCode(context);
+        },
+      ),
+    );
   }
 
-  void _redownloadCode(BuildContext context) {
-    var codeService = GetIt.instance.get<CodesService>();
-
-    ActivityIndicator.of(context).show();
-    codeService.downloadCode(widget._code)
-      .then((value) {
-        setState(() {});
-      })
-      .whenComplete(() {
-        ActivityIndicator.of(context).hide();
-      });
-  }
-
-    Future<String> _getLastUpdateDate() async {
-    final lastUpdate = await CategoriesRepository.instance.getLastUpdate(widget._code.id);
-
-    return lastUpdate ?? '';
+  Future _redownloadCode(BuildContext context) async {
+    await DownloadHelper.askForDownload(context, widget.code, DownloadMessages.downloadCode);
   }
 }

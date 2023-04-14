@@ -3,7 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:laws_browser/models/entities/category_model.dart';
 
 class CategoriesRepository {
-  static final CategoriesRepository _instance = CategoriesRepository._internalCtor();
+  static final CategoriesRepository _instance =
+      CategoriesRepository._internalCtor();
 
   static CategoriesRepository get instance => _instance;
 
@@ -36,13 +37,30 @@ class CategoriesRepository {
     await box.addAll(categories);
   }
 
-  Future<String?> getLastUpdate(String categoryId) async {
+  Future<String> setLastUpdateNow(String codeId) async {
+    var commonBox = await Hive.openBox('common');
+    var date = DateTime.now();
+    var formatter = DateFormat('yyyy-MM-dd');
+    var formattedDate = formatter.format(date);
+
+    await commonBox.put(codeId, formattedDate);
+
+    return formattedDate;
+  }
+
+  Future<String?> getLastUpdate(String codeId) async {
     var commonBox = await Hive.openBox('common');
 
-    if (!commonBox.containsKey(categoryId)) {
+    if (!commonBox.containsKey(codeId)) {
       return null;
     }
 
-    return commonBox.get(categoryId);
+    return commonBox.get(codeId);
+  }
+
+  Future<bool> exists(String boxName) async {
+    var box = await Hive.openBox<Category>(boxName);
+
+    return box.isNotEmpty;
   }
 }

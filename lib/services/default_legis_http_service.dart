@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:html/parser.dart';
 import 'package:laws_browser/constants.dart';
 import 'package:laws_browser/services/abstractions/legis_http_service.dart';
-import 'package:laws_browser/utils/models/code.dart';
+import 'package:laws_browser/models/common/code.dart';
 
 import 'package:http/http.dart' as http;
 

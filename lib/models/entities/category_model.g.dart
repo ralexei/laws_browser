@@ -17,12 +17,12 @@ class CategoryAdapter extends TypeAdapter<Category> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Category(
-      name: fields[1] as String,
+      fields[1] as String,
     )
       ..id = fields[0] as int
       ..parent = fields[2] as Category?
-      ..children = (fields[3] as List?)?.cast<Category>()
-      ..articles = (fields[4] as List?)?.cast<Article>();
+      ..children = (fields[3] as List).cast<Category>()
+      ..articles = (fields[4] as List).cast<Article>();
   }
 
   @override

@@ -1,43 +1,62 @@
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
-import 'package:hive/hive.dart';
-import 'package:laws_browser/components/activity_indicator.dart';
-import 'package:laws_browser/pages/code_menu_page.dart';
-import 'package:laws_browser/services/abstractions/codes_service.dart';
-import 'package:laws_browser/utils/constants/codes.dart' as codes;
-import 'package:laws_browser/utils/models/code.dart';
+import 'package:laws_browser/utils/constants/codes.dart';
+import 'package:laws_browser/utils/constants/download_messages.dart';
+import 'package:laws_browser/utils/helpers/download_helper.dart';
+import 'package:laws_browser/utils/helpers/navigation_utils.dart';
+import 'package:laws_browser/models/common/code.dart';
+import 'package:laws_browser/widgets/custom_app_bar.dart';
+import 'package:laws_browser/widgets/download_button.dart';
+
+import 'code_content_page.dart';
 
 class CodesListPage extends StatelessWidget {
-
   const CodesListPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text('Coduri')),
+        appBar: customAppBar(context, 'Coduri'),
         body: ListView.builder(
-            itemCount: codes.codes.length,
+            itemCount: codes.length,
             itemBuilder: (context, index) {
               return ListTile(
-                  title: Text(codes.codes[index].name),
-                  onTap: () {
-                    ActivityIndicator.of(context).show();
-                    _codeTap(context, codes.codes[index])
-                      .then((value) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (context) => ActivityIndicator(child: CodeMenuPage(code: codes.codes[index]))));
-                        ActivityIndicator.of(context).hide();
-                      });
+                  title: Text(codes[index].name),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DownloadButton(codes[index]),
+                      IconButton(
+                        onPressed: () {
+                          NavigationUtils.openSearch(context, codes[index]);
+                        },
+                        icon: const Icon(Icons.search),
+                      ),
+                      IconButton(
+                          onPressed: () {
+                            NavigationUtils.openCodeMenu(context, codes[index]);
+                          },
+                          icon: const Icon(Icons.settings))
+                    ],
+                  ),
+                  onTap: () async {
+                    await _onTap(context, codes[index]);
                   });
-            })
-          );
+            }));
   }
 
-  Future<void> _codeTap(BuildContext context, Code code) async {
-    var commonBox = await Hive.openBox('common');
-
-    if (!commonBox.containsKey(code.id)) {
-      await GetIt.instance.get<CodesService>().downloadCode(code);
+  Future<bool?> _onTap(BuildContext context, Code code) async {
+    if (code.lastUpdate != null) {
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => CodeContentPage(code: code)));
     }
+
+    return DownloadHelper.askForDownload(context, code, DownloadMessages.codeMissingDownload)
+        .then((value) {
+      if (value) {
+        NavigationUtils.openCode(context, code); // redirect
+      }
+
+      return value;
+    });
   }
 }

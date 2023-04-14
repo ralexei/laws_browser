@@ -1,12 +1,11 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:laws_browser/components/activity_indicator.dart';
 import 'package:laws_browser/pages/home_page.dart';
 import 'package:laws_browser/pages/splash_screen.dart';
 import 'package:laws_browser/startup.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 
 void main() async {
   HttpOverrides.global = MyHttpOverrides();
@@ -14,7 +13,6 @@ void main() async {
 }
 
 class LBApp extends StatelessWidget {
-
   const LBApp({super.key});
 
   @override
@@ -34,9 +32,7 @@ class LBApp extends StatelessWidget {
             future: Startup.initialize(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
-                return const ActivityIndicator(
-                  child: HomePage()
-                );
+                return const LoaderOverlay(child: HomePage());
               } else {
                 return const SplashScreen();
               }
@@ -44,10 +40,10 @@ class LBApp extends StatelessWidget {
   }
 }
 
- class MyHttpOverrides extends HttpOverrides{
+class MyHttpOverrides extends HttpOverrides {
   @override
-  HttpClient createHttpClient(SecurityContext? context){
+  HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-      ..badCertificateCallback = (X509Certificate cert, String host, int port)=> true;
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
   }
 }

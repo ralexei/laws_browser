@@ -1,203 +1,215 @@
+import 'dart:developer';
 import 'package:get_it/get_it.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart';
+import 'package:laws_browser/models/common/category_metadata.dart';
 import 'package:laws_browser/models/entities/article_model.dart';
 import 'package:laws_browser/models/entities/category_model.dart';
+import 'package:laws_browser/models/enums/category_types.dart';
 import 'package:laws_browser/services/abstractions/legis_http_service.dart';
 import 'package:laws_browser/services/abstractions/legis_synchronizer.dart';
+import 'package:laws_browser/utils/constants/categories_metadata.dart';
+import 'package:laws_browser/utils/constants/category_patterns.dart' as patterns;
 import 'package:laws_browser/utils/html_utils.dart';
-import 'package:laws_browser/utils/models/code.dart';
+import 'package:laws_browser/models/common/code.dart';
+import 'package:tuple/tuple.dart';
 
 class DefaultLegisSynchronizer implements LegisSynchronizer {
-  final RegExp _sectionRegEx = RegExp(r'Sec.*iunea.+');
-  final RegExp _subsectionRegEx = RegExp(r'Subsec.*iunea.+');
   final List<Category> _categories = <Category>[];
   late final String _documentText;
-  int rootPriority = 1;
+  int rootHI = 1;
 
   int lastArticleIndex = 0;
 
   @override
   Future<List<Category>> parseLegis(Code code) async {
-    var response =
-        await GetIt.instance.get<LegisHttpService>().downloadCode(code);
+    var response = await GetIt.instance.get<LegisHttpService>().downloadCode(code);
 
     if (response == null) {
       return [];
     }
-
     response = _removeCategoriesArtifacts(response);
     response = HtmlUtils.fixSupTags(response);
     var document = parse(response);
-    _documentText = HtmlUtils.removeHtmlDocumentTags(document)
-        .replaceAll(RegExp(r'(?:[\t ]*(?:\r?\n|\r))+'), '\n');
 
-    // var trimmedHtml = HtmlUtils.removeHtmlTags(response);
-    var categories = await _getCategories(document);
+    _documentText = HtmlUtils.removeHtmlDocumentTags(document).replaceAll(RegExp(r'(?:[\t ]*(?:\r?\n|\r))+'), '\n');
 
-    String firstCategory = categories[0];
-    String firstCategoryName =
-        firstCategory.substring(0, firstCategory.indexOf(' '));
+    var rawCategories = await _getCategories(document);
 
-    rootPriority = _getCategoryHierarchyProperty(firstCategoryName);
-
-    await _mapCategoriesRelations(Category(name: firstCategory), categories);
+    await _mapCategoriesRelations(rawCategories);
 
     return _categories;
   }
 
-  Future<List<String>> _getCategories(Document document) async {
-    var categoryRegEx = RegExp(r'(Partea.+(<br />)?(\n)?.+|'
-        r'Cartea.+(<br />)?(\n)?.+|'
-        r'Titlul.+(<br />)?(\n)?.+|'
-        r'Capitolul.+(<br />)?(\n)?.+|'
-        r'Sec.*iunea.+(<br />)?(\n)?.+|'
-        r'Subsec.*iunea.+(<br />)?(\n)?.+|'
-        r'§.+(<br />)?(\n)?.+|'
-        r'Articolul.+\.?)');
-    var resultList = <String>[];
-    var categoryElements = document.getElementsByTagName('strong');
-    var categoriesBodies =
-        categoryElements.map((e) => e.parent!.text.trim()).toList();
-    var categoriesConcatinated = categoriesBodies.join('\n');
-    var indexA = 0;
-    var indexB = 0;
-    var previousHierarchy = 0;
+  List<String> _getCategoriesBodies(Document document) {
+    var categoryElements = document.getElementsByTagName('strong').map((e) => e.parent!.text.trim()).toList();
+    List<Tuple2<int, List<String>>> indexedTokens = <Tuple2<int, List<String>>>[];
 
-    do {
-      indexA = categoriesConcatinated.indexOf(categoryRegEx, indexA);
-      indexB = categoriesConcatinated.indexOf(categoryRegEx, indexA + 1);
-
-      if (indexB == -1 && indexA != -1) {
-        // The case when it's the last article, so we should only parse
-        // till the dot.
-        indexB = categoriesConcatinated.indexOf('.', indexA + 1);
-
-        if (indexB == -1) {
-          indexB = categoriesConcatinated.length;
+    for (int i = 1; i < categoryElements.length; i++) {
+      if (categoryElements[i - 1].contains(categoryElements[i])) {
+        if (categoryElements[i - 1].isNotEmpty) {
+          categoryElements[i] = '';
         }
+      } else if (categoryElements[i] == '.') {
+        categoryElements[i - 1] += '.';
+        categoryElements[i] = '';
+      } else if (categoryElements[i].contains('\n')) {
+        var tokens = _getTokens(categoryElements[i], i);
+
+        categoryElements[i] = tokens.item2.first;
+        tokens.item2.removeAt(0);
+        indexedTokens.add(tokens);
+      }
+    }
+
+    var offset = 0;
+
+    for (var indexedToken in indexedTokens) {
+      var tokens = indexedToken.item2;
+      var i = 0;
+
+      for (i = 0; i < tokens.length; i++) {
+        categoryElements.insert(indexedToken.item1 + offset + i + 1, tokens[i].trim());
+      }
+      offset += i;
+    }
+
+    return categoryElements.where((element) => element.isNotEmpty).toList();
+  }
+
+  Tuple2<int, List<String>> _getTokens(String categoryBody, int index) {
+    var tokens = categoryBody.split('\n').where((w) => w.isNotEmpty).toList();
+
+    return Tuple2<int, List<String>>(index, tokens);
+  }
+
+  Future<List<Category>> _getCategories(Document document) async {
+    var resultList = <Category>[];
+    var categoriesBodies = _getCategoriesBodies(document);
+    var lhi = 0; // last hierarchy index
+    Category? lastCategory;
+
+    for (int i = 0; i < categoriesBodies.length; i++) {
+      var categoryRegEx = patterns.buildPattern(lhi);
+      var currentCategory = categoriesBodies[i];
+      var indexA = currentCategory.indexOf(categoryRegEx);
+
+      if (indexA != 0) {
+        if (lastCategory != null) {
+          lastCategory.name += '\n$currentCategory';
+        }
+
+        continue;
       }
 
-      if (indexA == -1 || indexB == -1) break;
+      var currentHierarchy = _getCategoryHierarchyProperty(currentCategory, lhi);
 
-      var articleSubstring = categoriesConcatinated.substring(indexA, indexB);
-      var currentHierarchy = _getCategoryHierarchyProperty(articleSubstring);
+      if (lhi != CategoryTypes.articol.index && currentHierarchy < lhi) {
+        if (lastCategory != null) {
+          lastCategory.name += '\n$currentCategory';
+        }
 
-      if (previousHierarchy != 0 && previousHierarchy > currentHierarchy) {
-        indexB = categoriesConcatinated.indexOf(categoryRegEx, indexB + 1);
-
-        articleSubstring = categoriesConcatinated.substring(indexA, indexB);
-        currentHierarchy = _getCategoryHierarchyProperty(articleSubstring);
+        continue;
       }
 
+      var categoryBuffer = categoriesBodies[i];
+
+      // Cut off the article name
       if (currentHierarchy == CategoryTypes.articol.index) {
-        var articleNumberIndex = articleSubstring.indexOf(RegExp(r'[0-9]'));
+        var articleNumberIndex = categoryBuffer.indexOf(RegExp(r'[0-9]'));
 
-        articleNumberIndex =
-            articleSubstring.indexOf(RegExp(r'[^0-9]'), articleNumberIndex);
-        articleSubstring = articleSubstring.substring(
-            0,
-            articleNumberIndex < 0
-                ? articleSubstring.length
-                : articleNumberIndex);
-        previousHierarchy = 0;
+        articleNumberIndex = categoryBuffer.indexOf(RegExp(r'[^0-9]^-?'), articleNumberIndex);
+        categoryBuffer = categoryBuffer.substring(0, articleNumberIndex < 0 ? categoryBuffer.length : articleNumberIndex);
       } else {
-        if (previousHierarchy != 8 && previousHierarchy > currentHierarchy) {
-          indexA++;
+        if (categoryBuffer.contains('- abrogat')) {
+          lastCategory = Category.create(categoryBuffer.trim(), currentHierarchy);
+          resultList.add(lastCategory);
           continue;
-        } else {
-          previousHierarchy = currentHierarchy;
         }
       }
 
-      indexA = indexB;
-      resultList.add(articleSubstring.trim());
-    } while (indexA != -1 && indexB != -1);
+      lhi = currentHierarchy;
+      lastCategory = Category.create(categoryBuffer.trim(), currentHierarchy);
+      resultList.add(lastCategory);
+    }
 
     return resultList;
   }
 
-  Future _mapCategoriesRelations(Category parent, List<String> categories,
-      [int index = 1]) async {
-    if (index >= categories.length) return;
+  Future _mapCategoriesRelations(List<Category> categories) async {
+    Stopwatch stopwatch = Stopwatch()..start();
 
-    parent.name = _trimCategory(parent.name);
+    categories.where((e) => e.hierarchy == categories[0].hierarchy).forEach((element) {
+      _categories.add(element);
+    });
 
-    var parentPriority = _getCategoryHierarchyProperty(parent.name);
-    var currentCategoryPrority =
-        _getCategoryHierarchyProperty(categories[index]);
+    for (int i = 0; i < _categories.length; i++) {
+      final root = _categories[i];
+      buildChildren(root, categories, categories.indexOf(root) + 1, root.hierarchy);
+      root.name = _sanitizeCategory(root.name);
+    }
+
+    stopwatch.stop();
+    log('_mapRelations executed: ${stopwatch.elapsed}'); // TODO: Remove
+  }
+
+  void buildChildren(Category parent, List<Category> categories, int index, int rootHierarchy) {
+    var childrenHierarchy = categories[index].hierarchy;
 
     while (index < categories.length) {
-      var categoryPriority = _getCategoryHierarchyProperty(categories[index]);
+      final category = categories[index];
+      final categoryHierarchy = category.hierarchy;
 
-      if (categoryPriority == parentPriority &&
-          parentPriority == rootPriority) {
-        break;
-      }
-      if (categoryPriority <= parentPriority) {
+      if (categoryHierarchy <= rootHierarchy) {
         return;
       }
 
-      if (categoryPriority == currentCategoryPrority) {
-        var categoryName = categories[index];
+      if (childrenHierarchy != categoryHierarchy) {
+        index++;
+        continue;
+      }
 
-        if (categoryPriority < CategoryTypes.articol.index) {
-          var newCategory = Category(name: categoryName);
+      if (categoryHierarchy == CategoryTypes.articol.index) {
+        final categoryName = category.name;
+        final articleId = _parseArticleId(categoryName);
+        final articleName = _sanitizeArticleName(categoryName);
+        var articleText = '';
 
-          parent.children!.add(newCategory);
-          _mapCategoriesRelations(newCategory, categories, index + 1);
+        if (index + 1 < categories.length) {
+          articleText = _parseArticleBody(articleName, categories[index + 1].name);
         } else {
-          final articleName = categoryName;
-          final articleId = _parseArticleId(categoryName);
-          var articleText = '';
-
-          if (index + 1 < categories.length) {
-            articleText =
-                _parseArticleBody(categoryName, categories[index + 1]);
-          } else {
-            articleText = _parseArticleBody(categoryName);
-          }
-
-          parent.articles!.add(Article(
-              id: articleId,
-              articleName: articleName.trim(),
-              articleText: articleText.trim()));
+          articleText = _parseArticleBody(articleName);
         }
+
+        parent.articles.add(Article(id: articleId, articleName: articleName.trim(), articleText: articleText.trim()));
+      } else {
+        category.name = _sanitizeCategory(category.name);
+        parent.children.add(category);
+        buildChildren(category, categories, index + 1, category.hierarchy);
       }
 
       index++;
     }
+  }
 
-    if (parentPriority == rootPriority) {
-      _categories.add(parent);
-
-      if (index < categories.length) {
-        _mapCategoriesRelations(
-            Category(name: categories[index]), categories, index + 1);
-      }
+  void printTree(List<Category> roots) {
+    for (var root in roots) {
+      printNode(root, '');
     }
   }
 
-  int _getCategoryHierarchyProperty(String categoryName) {
-    if (categoryName.contains("Partea")) {
-      return 1;
-    } else if (categoryName.contains("Cartea")) {
-      return 2;
-    } else if (categoryName.contains("Titlul")) {
-      return 3;
-    } else if (categoryName.contains("Capitolul")) {
-      return 4;
-    } else if (categoryName.contains(_sectionRegEx)) {
-      return 5;
-    } else if (categoryName.contains(_subsectionRegEx)) {
-      return 6;
-    } else if (categoryName.contains('§')) {
-      return 7;
-    } else if (categoryName.contains("Articolul")) {
-      return 8;
-    }
+  void printNode(Category node, String prefix) {
+    print('$prefix ${node.name}');
 
-    return 0;
+    if (node.children.isNotEmpty) {
+      for (var child in node.children) {
+        printNode(child, '$prefix -- ');
+      }
+    } else {
+      for (var article in node.articles) {
+        print('$prefix -- ${article.articleName}');
+      }
+    }
   }
 
   int _parseArticleId(String articleName) {
@@ -207,19 +219,15 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
   }
 
   String _parseArticleBody(String articleName, [String? nextCategory]) {
-    var articleStartIndex =
-        _documentText.indexOf(articleName, lastArticleIndex);
+    var articleStartIndex = _documentText.indexOf(articleName, lastArticleIndex);
     var articleEndIndex = 0;
 
     if (nextCategory != null) {
       nextCategory = nextCategory.split(RegExp(r'(?:\r?\n|\r)')).first;
 
-      articleEndIndex =
-          _documentText.indexOf(nextCategory, articleStartIndex + 1);
+      articleEndIndex = _documentText.indexOf(nextCategory, articleStartIndex + 1);
     } else {
-      articleEndIndex = _documentText.indexOf(
-          RegExp(r'^(?:[\t ]*(?:\r?\n|\r))+', multiLine: true),
-          articleStartIndex + 1);
+      articleEndIndex = _documentText.indexOf(RegExp(r'^(?:[\t ]*(?:\r?\n|\r))+', multiLine: true), articleStartIndex + 1);
 
       if (articleEndIndex == -1 || articleEndIndex >= _documentText.length) {
         articleEndIndex = _documentText.length;
@@ -231,13 +239,38 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
     return _documentText.substring(articleStartIndex, articleEndIndex);
   }
 
+  int _getCategoryHierarchyProperty(String categoryName, int startIndex) {
+    List<CategoryMetadata> tmp = categoriesMetadata;
+
+    if (startIndex == CategoryTypes.articol.index) {
+      tmp = tmp.reversed.toList();
+      startIndex = 0;
+    }
+
+    tmp = tmp.where((e) => e.categoryType.index != 0).toList();
+
+    for (var i = startIndex; i < tmp.length; i++) {
+      if (categoryName.startsWith(tmp[i].pattern)) {
+        return tmp[i].categoryType.index;
+      }
+    }
+
+    return CategoryTypes.none.index;
+  }
+
   String _capitalize(String m) {
     var lowerCase = m.toLowerCase().trim().replaceAll('\n', ' ');
 
     return lowerCase[0].toUpperCase() + lowerCase.substring(1);
   }
 
-  String _trimCategory(String category) {
+  String _sanitizeArticleName(String articleName) {
+    final match = patterns.articleRegex.firstMatch(articleName);
+
+    return (match?.group(0) ?? articleName).trim();
+  }
+
+  String _sanitizeCategory(String category) {
     var trimmedCategory = category.trim().replaceFirst('\n', '. ');
     var sentences = trimmedCategory.split('.');
     var firstSentence = sentences.removeAt(0);
@@ -250,40 +283,6 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
 
   // Fix all inconsistencies
   String _removeCategoriesArtifacts(String input) {
-    return input
-        .replaceAll('T i t l u l', 'Titlul')
-        .replaceAll('TITLUL', 'Titlul')
-        .replaceAll('C A R T E A', 'Cartea')
-        .replaceAll('PARTEA', 'Partea')
-        .replaceAll('Aricolul', "Articolul");
+    return input.replaceAll('T i t l u l', 'Titlul').replaceAll('TITLUL', 'Titlul').replaceAll('C A R T E A', 'Cartea').replaceAll('PARTEA', 'Partea').replaceAll('Aricolul', "Articolul");
   }
-  /* For the bad days
-  List<String> _getArticles(String trimmedHtml) {
-    var indexA = 0;
-    var indexB = 0;
-    var resultList = List<String>();
-    var articleRegExp = RegExp(r'Articolul \d+\.');
-
-    do {
-      indexA = trimmedHtml.indexOf(articleRegExp, indexA);
-      
-      indexB = trimmedHtml.indexOf(articleRegExp, indexA + 1);
- 
-      if (indexB == -1 && indexA != -1)
-        indexB = trimmedHtml.indexOf(RegExp(r'^(?:[\t ]*(?:\r?\n|\r))+', multiLine: true), indexA + 1);
-      
-      if (indexA == -1 || indexB == -1)
-        break;
-
-      var articleSubstring = trimmedHtml.substring(indexA, indexB);
-      
-      indexA = indexB;
-
-      resultList.add(articleSubstring);
-    }
-    while (indexA != -1 && indexB != -1);
-    
-    return resultList;
-  }
-  */
 }
