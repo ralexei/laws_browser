@@ -20,14 +20,14 @@ class CodeMenuPage extends StatelessWidget {
               child: ListTile(
                 title: const Text('Navigheaza'),
                 leading: const Icon(Icons.read_more),
-                onTap: () => NavigationUtils.openCode(context, code),
+                onTap: () => NavigationUtils.openCode(Navigator.of(context), code),
               ),
             ),
             Card(
               child: ListTile(
                 title: const Text('Cautare'),
                 leading: const Icon(Icons.search),
-                onTap: () => NavigationUtils.openSearch(context, code),
+                onTap: () => NavigationUtils.openSearch(Navigator.of(context), code),
               ),
             ),
             Card(

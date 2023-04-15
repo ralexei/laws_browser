@@ -27,36 +27,33 @@ class CodesListPage extends StatelessWidget {
                       DownloadButton(codes[index]),
                       IconButton(
                         onPressed: () {
-                          NavigationUtils.openSearch(context, codes[index]);
+                          NavigationUtils.openSearch(Navigator.of(context), codes[index]);
                         },
                         icon: const Icon(Icons.search),
                       ),
                       IconButton(
                           onPressed: () {
-                            NavigationUtils.openCodeMenu(context, codes[index]);
+                            NavigationUtils.openCodeMenu(Navigator.of(context), codes[index]);
                           },
                           icon: const Icon(Icons.settings))
                     ],
                   ),
                   onTap: () async {
-                    await _onTap(context, codes[index]);
+                    var navigator = Navigator.of(context);
+                    var isDownloaded = await _onTap(context, codes[index]);
+
+                    if (isDownloaded) {
+                      NavigationUtils.openCode(navigator, codes[index]);
+                    }
                   });
             }));
   }
 
-  Future<bool?> _onTap(BuildContext context, Code code) async {
+  Future<bool> _onTap(BuildContext context, Code code) async {
     if (code.lastUpdate != null) {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => CodeContentPage(code: code)));
+      return true;
     }
 
-    return DownloadHelper.askForDownload(context, code, DownloadMessages.codeMissingDownload)
-        .then((value) {
-      if (value) {
-        NavigationUtils.openCode(context, code); // redirect
-      }
-
-      return value;
-    });
+    return await DownloadHelper.askForDownload(context, code, DownloadMessages.codeMissingDownload);
   }
 }

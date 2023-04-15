@@ -6,19 +6,19 @@ import 'package:laws_browser/pages/search_page.dart';
 import 'package:laws_browser/models/common/code.dart';
 
 class NavigationUtils {
-  static void openSearch(BuildContext context, Code code) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => SearchPage(code)));
+  static void openSearch(NavigatorState navigator, Code code) {
+    navigator.push(MaterialPageRoute(builder: (context) => SearchPage(code)));
   }
 
-  static void openCodeMenu(BuildContext context, Code code) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => CodeMenuPage(code: code)));
+  static void openCodeMenu(NavigatorState navigator, Code code) {
+    navigator.push(MaterialPageRoute(builder: (BuildContext context) => CodeMenuPage(code: code)));
   }
 
-  static void openCode(BuildContext context, Code code) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => CodeContentPage(code: code)));
+  static void openCode(NavigatorState navigator, Code code) {
+    navigator.push(MaterialPageRoute(builder: (context) => CodeContentPage(code: code)));
   }
 
-  static void openGlobalSearch(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => GlobalSearchPage()));
+  static void openGlobalSearch(NavigatorState navigator) {
+    navigator.push(MaterialPageRoute(builder: (context) => const GlobalSearchPage()));
   }
 }

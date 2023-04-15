@@ -55,7 +55,7 @@ class DefaultLegisHttpService implements LegisHttpService {
   }
 
   Future<String?> _fetchDocument(String docId) async {
-    final fetchUri = Uri.https(Constants.BaseLegisUrl, '/cautare/showdetails/$docId');
+    final fetchUri = Uri.https(Constants.baseLegisUrl, '/cautare/showdetails/$docId');
     final response = await http.get(fetchUri);
 
     if (response.statusCode != HttpStatus.ok) {
@@ -65,11 +65,12 @@ class DefaultLegisHttpService implements LegisHttpService {
     return response.body;
   }
 
+  
   // Make an AJAX search request to get a table with codes
   // Extract the necessary code by filtering it's search term
   Future<String?> _getCodeUrl(Code code, String sessionCookie) async {
     final queryParameters = { 'filter_title': code.searchTerm };
-    final ajaxSearchUri = Uri.https(Constants.BaseLegisUrl, '/cautare/getAjaxContent', queryParameters);
+    final ajaxSearchUri = Uri.https(Constants.baseLegisUrl, '/cautare/getAjaxContent', queryParameters);
     final response = await http.get(ajaxSearchUri, headers: {'cookie': sessionCookie});
 
     if (response.statusCode != HttpStatus.ok) {
@@ -99,7 +100,7 @@ class DefaultLegisHttpService implements LegisHttpService {
       'search_type': '1',
       'search_string': code.searchTerm
     };
-    var uri = Uri.https(Constants.BaseLegisUrl, '/cautare/getResults', queryParameters);
+    var uri = Uri.https(Constants.baseLegisUrl, '/cautare/getResults', queryParameters);
     // https://www.legis.md/cautare/getResults?document_status=0&tip%5B%5D=39350&nr_doc=&datepicker1=&publication_status=+-+TOATE+-+&nr=&publish_date=&search_type=1&search_string=CODUL+PENAL+AL+REPUBLICII+MOLDOVA
     var response = await http.get(uri);
 
