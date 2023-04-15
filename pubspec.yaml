@@ -35,7 +35,6 @@ dependencies:
   hive:
   hive_flutter:
   equatable:
-  flutter_bloc:
   shared_preferences:
   html:
   http:
@@ -46,8 +45,10 @@ dependencies:
     sdk: flutter
   intl:
   get_it:
-  loading_overlay:
+  loader_overlay:
   tuple:
+  provider:
+  connectivity_plus:
 
 dev_dependencies:
   flutter_test:
