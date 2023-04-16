@@ -1,16 +1,8 @@
-# laws_browser
+# Lex MD (laws_browser)
 
-A new Flutter project.
+A Flutter application which is parsing and locally saving the Moldova's codes of law from the legis.md site for offline access.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Current features:
+- Downloading (involves pages download and it's parsing for future save)
+- Navigation through structured chapters of the codes
+- Search through the saved codes's content.
