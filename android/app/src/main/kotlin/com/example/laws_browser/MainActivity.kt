@@ -1,4 +1,4 @@
-package com.example.laws_browser
+package com.lex.laws_browser
 
 import io.flutter.embedding.android.FlutterActivity
 

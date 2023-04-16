@@ -1,5 +1,5 @@
 name: laws_browser
-description: A new Flutter project.
+description: A parser and browser of the legislative codes of RM.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -49,6 +49,7 @@ dependencies:
   tuple:
   provider:
   connectivity_plus:
+  flutter_launcher_icons:
 
 dev_dependencies:
   flutter_test:
