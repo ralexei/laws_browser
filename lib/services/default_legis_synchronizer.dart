@@ -41,6 +41,9 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
     return _categories;
   }
 
+  /*
+  ** Private methods
+  */
   List<String> _getCategoriesBodies(Document document) {
     var categoryElements = document.getElementsByTagName('strong').map((e) => e.parent!.text.trim()).toList();
     List<Tuple2<int, List<String>>> indexedTokens = <Tuple2<int, List<String>>>[];
@@ -150,7 +153,7 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
     }
 
     stopwatch.stop();
-    log('_mapRelations executed: ${stopwatch.elapsed}'); // TODO: Remove
+    log('_mapRelations executed: ${stopwatch.elapsed}');
   }
 
   void buildChildren(Category parent, List<Category> categories, int index, int rootHierarchy) {
@@ -199,7 +202,7 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
   }
 
   void printNode(Category node, String prefix) {
-    print('$prefix ${node.name}');
+    log('$prefix ${node.name}');
 
     if (node.children.isNotEmpty) {
       for (var child in node.children) {
@@ -207,7 +210,7 @@ class DefaultLegisSynchronizer implements LegisSynchronizer {
       }
     } else {
       for (var article in node.articles) {
-        print('$prefix -- ${article.articleName}');
+        log('$prefix -- ${article.articleName}');
       }
     }
   }

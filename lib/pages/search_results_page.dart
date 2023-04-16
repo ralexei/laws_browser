@@ -18,7 +18,7 @@ class SearchResultsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Search results')),
+      appBar: AppBar(title: const Text('Rezultatele căutării')),
       body: Padding(
         padding: const EdgeInsets.all(8),
         child: ListView(
@@ -38,7 +38,11 @@ class SearchResultsPage extends StatelessWidget {
               initiallyExpanded: searchResults.length > 1 ? false : true,
               childrenPadding: const EdgeInsets.all(8),
               children: [
-                SearchResultsList(searchResults: e.value),
+                if (e.value.isNotEmpty)
+                  SearchResultsList(searchResults: e.value),
+                
+                if (e.value.isEmpty)
+                  const Center(child: Text('Niciun rezultat'))
               ],
             ),
           ),

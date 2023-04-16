@@ -52,14 +52,14 @@ class DownloadHelper {
     }
 
     if (!context.mounted) return false;
-
-    var confirmationResult = await openConfirmationDialog(context, 'Atenție', 'Doriți să descărcați toate codurile care lispesc?');
+    var confirmationMessage = 'Doriți să descărcați toate codurile care lispesc?\nAceastă operațiune poate dura câteva minute.';
+    var confirmationResult = await openConfirmationDialog(context, 'Atenție', confirmationMessage);
 
     if (!context.mounted) return false;
 
-    context.loaderOverlay.show();
-
     if (confirmationResult != null && confirmationResult) {
+      context.loaderOverlay.show();
+      
       var result = await _downloadAllCodes(context);
 
       if (context.mounted) {

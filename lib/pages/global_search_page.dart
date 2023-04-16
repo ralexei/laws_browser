@@ -35,16 +35,22 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
             key: _formKey,
             child: Column(
               children: [
+                
+                TextFormField(
+                  onSaved: (newValue) => searchTerms = newValue!,
+                  validator: (value) => _validateInput(value),
+                  decoration: const InputDecoration(
+                    label: Text('Termenii de căutare')
+                  ),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
                 DropdownButtonFormField(
                   onSaved: (newValue) => searchCode = newValue,
                   items: _getDropdownItems(),
                   onChanged: (Code? code) {},
-                ),
-                TextFormField(
-                  onSaved: (newValue) => searchTerms = newValue!,
-                  validator: (value) => _validateInput(value),
-                  decoration: const InputDecoration(hintText: 'Termenii de căutare'),
-                  style: Theme.of(context).textTheme.bodyLarge,
+                  decoration: const InputDecoration(
+                    label: Text('Căutare în:')
+                  ),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -77,13 +83,15 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
     }
 
     _formKey.currentState!.save();
-
+    final navigator = Navigator.of(context);
     if (searchCode == null) {
-      await _getSearchResults()
-        .then((value) => Navigator.of(context).push(MaterialPageRoute(builder: (context) => SearchResultsPage(value))));
+      var searchResults = (await _getSearchResults())..removeWhere((key, value) => value.isEmpty);
+
+      navigator.push(MaterialPageRoute(builder: (context) => SearchResultsPage(searchResults)));
     } else {
-      await _getSearchResultsForCode(searchCode!)
-        .then((value) => Navigator.of(context).push(MaterialPageRoute(builder: (context) => SearchResultsPage.single(searchCode!, value))));
+      var searchResult = await _getSearchResultsForCode(searchCode!);
+
+      navigator.push(MaterialPageRoute(builder: (context) => SearchResultsPage.single(searchCode!, searchResult)));
     }
   }
 

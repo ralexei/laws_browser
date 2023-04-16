@@ -16,7 +16,7 @@ class SearchResultsList extends StatefulWidget {
 class _SearchResultsListState extends State<SearchResultsList> {
   final int previewLength = 200;
   final int previewBeforeMatchLength = 50;
-  final int itemsPerPage = 5;
+  final int itemsPerPage = 3;
 
   int length = 0;
 
@@ -35,6 +35,7 @@ class _SearchResultsListState extends State<SearchResultsList> {
       children: [
         ListView(
           shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           children: _getSearchResults(),
         ),
         const SizedBox(height: 8),
@@ -83,7 +84,9 @@ class _SearchResultsListState extends State<SearchResultsList> {
                   style: Theme.of(context).textTheme.bodyLarge,
                   parse: _getMatchers(context, item),
                 ),
-                const Center(child: Icon(Icons.more_horiz))
+                const Center(
+                  child: Icon(Icons.more_horiz),
+                )
               ],
             ),
           ),
@@ -103,9 +106,11 @@ class _SearchResultsListState extends State<SearchResultsList> {
     var previewStartIndex = 0;
 
     if (searchResult.matchedFullString.isNotEmpty) {
-      previewStartIndex = article.toLowerCase().indexOf(StringHelpers.removeDiacritics(searchResult.matchedFullString.toLowerCase()));
+      previewStartIndex =
+          article.toLowerCase().indexOf(StringHelpers.removeDiacritics(searchResult.matchedFullString.toLowerCase()));
     } else if (searchResult.matchedTerms.isNotEmpty) {
-      previewStartIndex = article.toLowerCase().indexOf(StringHelpers.removeDiacritics(searchResult.matchedTerms.first.toLowerCase()));
+      previewStartIndex =
+          article.toLowerCase().indexOf(StringHelpers.removeDiacritics(searchResult.matchedTerms.first.toLowerCase()));
     }
 
     previewStartIndex -= previewBeforeMatchLength;
@@ -134,7 +139,12 @@ class _SearchResultsListState extends State<SearchResultsList> {
       ];
     } else {
       if (item.matchedTerms.isNotEmpty) {
-        return item.matchedTerms.map((e) => MatchText(onTap: (s) => _redirectToArticle(context, item.result), pattern: e, style: const TextStyle(backgroundColor: Colors.yellow))).toList();
+        return item.matchedTerms
+            .map((e) => MatchText(
+                onTap: (s) => _redirectToArticle(context, item.result),
+                pattern: e,
+                style: const TextStyle(backgroundColor: Colors.yellow)))
+            .toList();
       }
     }
 

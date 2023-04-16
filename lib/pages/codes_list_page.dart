@@ -6,6 +6,7 @@ import 'package:laws_browser/utils/helpers/navigation_utils.dart';
 import 'package:laws_browser/models/common/code.dart';
 import 'package:laws_browser/widgets/custom_app_bar.dart';
 import 'package:laws_browser/widgets/download_button.dart';
+import 'package:laws_browser/widgets/drawer.dart';
 
 import 'code_content_page.dart';
 
@@ -16,6 +17,7 @@ class CodesListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: customAppBar(context, 'Coduri'),
+        drawer: getDrawer(context),
         body: ListView.builder(
             itemCount: codes.length,
             itemBuilder: (context, index) {
